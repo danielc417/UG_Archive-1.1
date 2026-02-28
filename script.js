@@ -55,9 +55,9 @@
   audio.muted = state.muted;
 
   var cutout49 = document.createElement("img");
+  cutout49.className = "cutout-49";
   cutout49.src = "assets/images/cutout-49.png";
   cutout49.alt = "cutout 49";
-  cutout49.style.cssText = "position:fixed;top:8px;left:8px;z-index:980;pointer-events:none;display:block;width:clamp(54px,6vw,84px);height:auto;";
   cutout49.onerror = function () { this.style.display = "none"; };
 
   const ui = document.createElement("div");

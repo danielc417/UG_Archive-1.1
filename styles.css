@@ -341,6 +341,17 @@ h2 {
   transform: rotate(-6deg);
 }
 
+.cutout-49 {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 980;
+  pointer-events: none;
+  display: block;
+  width: clamp(54px, 6vw, 84px);
+  height: auto;
+}
+
 .bg-player {
   position: fixed;
   top: 12px;
