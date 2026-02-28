@@ -108,153 +108,85 @@
     cutoutLayer.appendChild(img);
   }
 
+  Array.from(cutoutLayer.querySelectorAll(".artist-cutout")).forEach(function (img) {
+    img.addEventListener("load", layoutExtraCutouts);
+  });
+
   function layoutExtraCutouts() {
-    const extras = cutoutLayer.querySelectorAll(".cutout-extra");
-    const fixed = cutoutLayer.querySelectorAll(".artist-cutout:not(.cutout-extra)");
+    const cutouts = Array.from(cutoutLayer.querySelectorAll(".artist-cutout"));
     const isMobile = window.matchMedia("(max-width: 640px)").matches;
     const container = document.querySelector("main.content-wrap");
-    const containerHeight = container ? container.offsetHeight : (isMobile ? 1300 : 1700);
+    const containerHeight = container ? container.offsetHeight : (isMobile ? 1500 : 2000);
+    const topStart = isMobile ? -14 : -56;
+    const maxTop = Math.max(900, containerHeight - (isMobile ? 160 : 220));
+    const laneConfig = isMobile
+      ? [
+          { side: "left", offset: -90 },
+          { side: "left", offset: -58 },
+          { side: "right", offset: -90 },
+          { side: "right", offset: -58 }
+        ]
+      : [
+          { side: "left", offset: -352 },
+          { side: "left", offset: -296 },
+          { side: "left", offset: -240 },
+          { side: "right", offset: -352 },
+          { side: "right", offset: -296 },
+          { side: "right", offset: -240 }
+        ];
+    const lanes = laneConfig.map(function (lane, idx) {
+      return {
+        side: lane.side,
+        offset: lane.offset,
+        nextTop: topStart + (idx % 3) * (isMobile ? 12 : 18)
+      };
+    });
+    const baseWidth = isMobile ? 28 : 62;
+    const widthStep = isMobile ? 3 : 5;
+    const minGap = isMobile ? 12 : 18;
+    const topJitter = isMobile ? 10 : 14;
 
-    if (isMobile) {
-      const fixedStart = -18;
-      const fixedVisibleCount = Math.max(1, Math.ceil(fixed.length / 2));
-      const fixedRows = Math.max(1, Math.ceil(fixedVisibleCount / 2));
-      const fixedEnd = Math.max(fixedStart + 260, containerHeight - 180);
-      const fixedStep = fixedRows > 1 ? (fixedEnd - fixedStart) / (fixedRows - 1) : 0;
-      let fixedVisibleIndex = 0;
-
-      fixed.forEach(function (img, idx) {
-        // Show only half of fixed cutouts on mobile to keep text readable.
-        if (idx % 2 === 1) {
-          img.style.display = "none";
-          return;
-        }
-
-        const row = Math.floor(fixedVisibleIndex / 2);
-        const lane = row % 2;
-        const isRight = fixedVisibleIndex % 2 === 0;
-        const width = 46 + (fixedVisibleIndex % 4) * 4;
-        const top = fixedStart + row * fixedStep + (lane ? 10 : 0);
-        const rotate = (isRight ? -1 : 1) * (3 + (fixedVisibleIndex % 3) * 2);
-
-        img.style.display = "";
-        img.style.top = top + "px";
-        img.style.left = "";
-        img.style.right = "";
-        img.style.width = width + "px";
-        img.style.transform = "rotate(" + rotate + "deg)";
-        img.style.zIndex = String(116 + (fixedVisibleIndex % 5));
-
-        if (isRight) {
-          img.style.right = lane ? "-58px" : "-44px";
-        } else {
-          img.style.left = lane ? "-58px" : "-44px";
-        }
-
-        fixedVisibleIndex += 1;
-      });
-    } else {
-      fixed.forEach(function (img) {
-        img.style.display = "";
-        img.style.top = "";
-        img.style.left = "";
-        img.style.right = "";
-        img.style.width = "";
-        img.style.transform = "";
-        img.style.zIndex = "";
-      });
-    }
-
-    const startTop = isMobile ? -12 : -60;
-    const maxTop = Math.max(startTop + 300, containerHeight - (isMobile ? 180 : 260));
-    const mobileVisibleExtras = isMobile ? Math.ceil(extras.length / 4) : extras.length;
-    const totalRows = Math.max(1, Math.ceil(mobileVisibleExtras / 2));
-    const step = totalRows > 1 ? (maxTop - startTop) / (totalRows - 1) : 0;
-
-    extras.forEach(function (img, idx) {
-      // Show only one in every four extra cutouts on mobile.
-      if (isMobile && idx % 4 !== 0) {
-        img.style.display = "none";
-        return;
-      }
-
+    cutouts.forEach(function (img, idx) {
       img.style.display = "";
-      const logicalIndex = isMobile ? Math.floor(idx / 4) : idx;
-      const row = Math.floor(logicalIndex / 2);
-      // Bias distribution left to reduce right-side stacking with fixed cutouts.
-      const isRight = isMobile ? logicalIndex % 2 === 0 : idx % 3 === 1;
-      const lane = row % 2; // 0: outer edge, 1: inner edge
-      let top = Math.min(startTop + row * step, maxTop);
-      const width = isMobile ? 34 + (logicalIndex % 4) * 3 : 68 + (idx % 6) * 4;
-      const rotate = (isRight ? 1 : -1) * (4 + ((isMobile ? logicalIndex : idx) % 4) * 2);
+      const lane = lanes.reduce(function (best, current) {
+        return current.nextTop < best.nextTop ? current : best;
+      }, lanes[0]);
 
-      // Nudge auto right-side cutouts away from crowded vertical bands.
-      if (isRight) {
-        const crowdedBands = isMobile
-          ? [
-              [170, 360],
-              [500, 700]
-            ]
-          : [
-              [120, 340],
-              [420, 620]
-            ];
-        crowdedBands.forEach(function (band) {
-          if (top >= band[0] && top <= band[1]) {
-            top += isMobile ? 34 : 44;
-          }
-        });
+      const width = baseWidth + (idx % 7) * widthStep;
+      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
+      const clampedRatio = Math.max(0.9, Math.min(2.4, ratio));
+      const estimatedHeight = width * clampedRatio;
+      let top = lane.nextTop + ((idx % 2) * topJitter - topJitter / 2);
+
+      // Wrap long lanes upward to keep spacing balanced on very long pages.
+      if (top > maxTop) {
+        top = topStart + (idx % 9) * (isMobile ? 34 : 44);
       }
 
-      img.style.top = (top + (lane ? (isMobile ? 14 : 18) : 0)) + "px";
-      img.style.width = width + "px";
-      img.style.transform = "rotate(" + rotate + "deg)";
+      const rotationBase = 3 + (idx % 4) * (isMobile ? 1.5 : 2);
+      const rotation = (lane.side === "left" ? -1 : 1) * rotationBase;
+
+      img.style.top = Math.round(top) + "px";
       img.style.left = "";
       img.style.right = "";
-      img.style.zIndex = String(118 + (idx % 6));
+      img.style.width = width + "px";
+      img.style.transform = "rotate(" + rotation + "deg)";
+      img.style.zIndex = String(108 + (idx % 10));
 
-      if (isRight) {
-        img.style.right = lane ? (isMobile ? "-68px" : "-282px") : (isMobile ? "-52px" : "-338px");
+      if (lane.side === "left") {
+        img.style.left = lane.offset + "px";
       } else {
-        img.style.left = lane ? (isMobile ? "-68px" : "-236px") : (isMobile ? "-52px" : "-306px");
+        img.style.right = lane.offset + "px";
       }
 
-      if (!isMobile) {
-        // Special placement: desktop fine-tuning for specific cutouts.
-        if (img.src.includes("cutout-22.png")) {
-          img.style.right = "";
-          img.style.left = "-170px";
-          img.style.top = "30px";
-          img.style.width = "148px";
-          img.style.transform = "rotate(-6deg)";
-          img.style.zIndex = "124";
-        }
+      lane.nextTop = top + estimatedHeight + minGap;
+    });
 
-        if (img.src.includes("cutout-30.png")) {
-          img.style.left = "";
-          img.style.right = "-350px";
-        }
-
-        if (img.src.includes("cutout-37.png")) {
-          img.style.left = "";
-          img.style.right = "-120px";
-          img.style.width = "150px";
-          const currentTop = parseFloat(img.style.top) || 0;
-          img.style.top = currentTop + 150 + "px";
-          img.style.zIndex = "125";
-        }
-
-        if (img.src.includes("cutout-40.png")) {
-          img.style.left = "";
-          img.style.right = "-350px";
-          const currentTop = parseFloat(img.style.top) || 0;
-          img.style.top = currentTop + 34 + "px";
-        }
-
-        if (img.src.includes("cutout-41.png")) {
-          img.style.right = "";
-          img.style.left = "-198px";
-        }
+    // Keep the top-right music control area cleaner.
+    cutouts.forEach(function (img) {
+      const top = parseFloat(img.style.top) || 0;
+      if (!isMobile && img.style.right && top < 116) {
+        img.style.top = top + 120 + "px";
       }
     });
   }
