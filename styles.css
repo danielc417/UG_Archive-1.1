@@ -13,6 +13,11 @@
   box-sizing: border-box;
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 body {
   margin: 0;
   font-family: "Trebuchet MS", "Segoe UI", sans-serif;
@@ -97,6 +102,8 @@ h2 {
   border-radius: 14px;
   padding: 1rem 1.1rem;
   margin-bottom: 1.25rem;
+  position: relative;
+  z-index: 2;
 }
 
 .manifesto p {
@@ -191,7 +198,7 @@ h2 {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 120;
+  z-index: 1;
 }
 
 .artist-cutout {
@@ -471,47 +478,47 @@ h2 {
 
 @media (max-width: 640px) {
   body {
-    line-height: 1.55;
-    padding-bottom: 4.5rem;
+    line-height: 1.45;
+    padding-bottom: 7.25rem;
   }
 
   .site-header,
   .site-footer {
-    width: min(560px, 92%);
-    padding: 1.15rem 0 0.75rem;
+    width: min(520px, 92%);
+    padding: 0.95rem 0 0.65rem;
   }
 
   .content-wrap {
-    width: min(560px, 90%);
-    margin-bottom: 1.25rem;
+    width: min(520px, 86%);
+    margin-bottom: 1rem;
   }
 
   h1 {
-    font-size: clamp(1.4rem, 7vw, 1.9rem);
-    margin-bottom: 0.5rem;
+    font-size: clamp(1.2rem, 6.2vw, 1.65rem);
+    margin-bottom: 0.35rem;
   }
 
   h2 {
-    font-size: 1.15rem;
-    line-height: 1.2;
+    font-size: 1rem;
+    line-height: 1.18;
   }
 
   .lead {
     width: 100%;
-    font-size: 0.93rem;
-    line-height: 1.45;
+    font-size: 0.82rem;
+    line-height: 1.35;
   }
 
   .manifesto {
-    padding: 0.78rem 0.82rem;
-    margin-bottom: 0.85rem;
+    padding: 0.62rem 0.68rem;
+    margin-bottom: 0.72rem;
     border-radius: 11px;
   }
 
   .manifesto p {
-    margin: 0.35rem 0;
-    font-size: 0.92rem;
-    line-height: 1.45;
+    margin: 0.3rem 0;
+    font-size: 0.82rem;
+    line-height: 1.36;
   }
 
   .bg-player {
@@ -520,6 +527,7 @@ h2 {
     bottom: max(10px, env(safe-area-inset-bottom));
     gap: 0.35rem;
     padding: 0.35rem 0.45rem;
+    max-width: calc(100vw - 20px);
   }
 
   .bg-disc {
@@ -535,10 +543,15 @@ h2 {
 
   .bg-meta {
     margin-right: 0;
+    min-width: 0;
+    max-width: 92px;
   }
 
   .bg-title {
-    font-size: 0.74rem;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .bg-artist {
@@ -546,6 +559,10 @@ h2 {
   }
 
   .bg-volume {
-    width: 62px;
+    width: 54px;
+  }
+
+  .artist-cutout {
+    opacity: 0.9;
   }
 }

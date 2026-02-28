@@ -117,15 +117,15 @@
 
     if (isMobile) {
       const fixedStart = -18;
-      const fixedVisibleCount = Math.max(1, Math.ceil((fixed.length * 2) / 3));
+      const fixedVisibleCount = Math.max(1, Math.ceil(fixed.length / 2));
       const fixedRows = Math.max(1, Math.ceil(fixedVisibleCount / 2));
       const fixedEnd = Math.max(fixedStart + 260, containerHeight - 180);
       const fixedStep = fixedRows > 1 ? (fixedEnd - fixedStart) / (fixedRows - 1) : 0;
       let fixedVisibleIndex = 0;
 
       fixed.forEach(function (img, idx) {
-        // Hide every third fixed cutout on mobile to reduce crowding.
-        if (idx % 3 === 2) {
+        // Show only half of fixed cutouts on mobile to keep text readable.
+        if (idx % 2 === 1) {
           img.style.display = "none";
           return;
         }
@@ -133,7 +133,7 @@
         const row = Math.floor(fixedVisibleIndex / 2);
         const lane = row % 2;
         const isRight = fixedVisibleIndex % 2 === 0;
-        const width = 60 + (fixedVisibleIndex % 4) * 6;
+        const width = 46 + (fixedVisibleIndex % 4) * 4;
         const top = fixedStart + row * fixedStep + (lane ? 10 : 0);
         const rotate = (isRight ? -1 : 1) * (3 + (fixedVisibleIndex % 3) * 2);
 
@@ -146,9 +146,9 @@
         img.style.zIndex = String(116 + (fixedVisibleIndex % 5));
 
         if (isRight) {
-          img.style.right = lane ? "-30px" : "-14px";
+          img.style.right = lane ? "-58px" : "-44px";
         } else {
-          img.style.left = lane ? "-30px" : "-14px";
+          img.style.left = lane ? "-58px" : "-44px";
         }
 
         fixedVisibleIndex += 1;
@@ -167,24 +167,25 @@
 
     const startTop = isMobile ? -12 : -60;
     const maxTop = Math.max(startTop + 300, containerHeight - (isMobile ? 180 : 260));
-    const mobileVisibleExtras = isMobile ? Math.ceil(extras.length / 2) : extras.length;
+    const mobileVisibleExtras = isMobile ? Math.ceil(extras.length / 4) : extras.length;
     const totalRows = Math.max(1, Math.ceil(mobileVisibleExtras / 2));
     const step = totalRows > 1 ? (maxTop - startTop) / (totalRows - 1) : 0;
 
     extras.forEach(function (img, idx) {
-      if (isMobile && idx % 2 === 1) {
+      // Show only one in every four extra cutouts on mobile.
+      if (isMobile && idx % 4 !== 0) {
         img.style.display = "none";
         return;
       }
 
       img.style.display = "";
-      const logicalIndex = isMobile ? Math.floor(idx / 2) : idx;
+      const logicalIndex = isMobile ? Math.floor(idx / 4) : idx;
       const row = Math.floor(logicalIndex / 2);
       // Bias distribution left to reduce right-side stacking with fixed cutouts.
-      const isRight = isMobile ? logicalIndex % 2 === 1 : idx % 3 === 1;
+      const isRight = isMobile ? logicalIndex % 2 === 0 : idx % 3 === 1;
       const lane = row % 2; // 0: outer edge, 1: inner edge
       let top = Math.min(startTop + row * step, maxTop);
-      const width = isMobile ? 44 + (logicalIndex % 4) * 4 : 68 + (idx % 6) * 4;
+      const width = isMobile ? 34 + (logicalIndex % 4) * 3 : 68 + (idx % 6) * 4;
       const rotate = (isRight ? 1 : -1) * (4 + ((isMobile ? logicalIndex : idx) % 4) * 2);
 
       // Nudge auto right-side cutouts away from crowded vertical bands.
@@ -213,9 +214,9 @@
       img.style.zIndex = String(118 + (idx % 6));
 
       if (isRight) {
-        img.style.right = lane ? (isMobile ? "-34px" : "-282px") : (isMobile ? "-18px" : "-338px");
+        img.style.right = lane ? (isMobile ? "-68px" : "-282px") : (isMobile ? "-52px" : "-338px");
       } else {
-        img.style.left = lane ? (isMobile ? "-34px" : "-236px") : (isMobile ? "-18px" : "-306px");
+        img.style.left = lane ? (isMobile ? "-68px" : "-236px") : (isMobile ? "-52px" : "-306px");
       }
 
       if (!isMobile) {
