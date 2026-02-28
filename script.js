@@ -435,14 +435,6 @@
   placeCutoutOnPage();
   updateUI();
 
-  function pinCutout49() {
-    cutout49.style.transform = "translate(" + window.scrollX + "px," + window.scrollY + "px)";
-  }
-
-  window.addEventListener("scroll", pinCutout49, { passive: true });
-  window.addEventListener("resize", pinCutout49);
-  pinCutout49();
-
   if (state.playing) {
     tryPlay();
   }
