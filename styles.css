@@ -470,119 +470,82 @@ h2 {
 }
 
 @media (max-width: 640px) {
-  .artist-cutout {
-    width: 86px;
+  body {
+    line-height: 1.55;
+    padding-bottom: 4.5rem;
   }
 
-  .cutout-a {
-    right: -52px;
-    top: 230px;
+  .site-header,
+  .site-footer {
+    width: min(560px, 92%);
+    padding: 1.15rem 0 0.75rem;
   }
 
-  .cutout-b {
-    left: -52px;
-    top: 380px;
+  .content-wrap {
+    width: min(560px, 90%);
+    margin-bottom: 1.25rem;
   }
 
-  .cutout-c {
-    right: -4px;
-    top: 540px;
+  h1 {
+    font-size: clamp(1.4rem, 7vw, 1.9rem);
+    margin-bottom: 0.5rem;
   }
 
-  .cutout-d {
-    left: -58px;
-    top: 700px;
+  h2 {
+    font-size: 1.15rem;
+    line-height: 1.2;
   }
 
-  .cutout-e {
-    right: -14px;
-    top: 900px;
+  .lead {
+    width: 100%;
+    font-size: 0.93rem;
+    line-height: 1.45;
   }
 
-  .cutout-f {
-    left: -44px;
-    top: 1000px;
+  .manifesto {
+    padding: 0.78rem 0.82rem;
+    margin-bottom: 0.85rem;
+    border-radius: 11px;
   }
 
-  .cutout-g {
-    right: -56px;
-    top: 990px;
-  }
-
-  .cutout-h {
-    left: -62px;
-    top: 120px;
-    width: 92px;
-  }
-
-  .cutout-i {
-    left: -88px;
-    top: 250px;
-    width: 74px;
-  }
-
-  .cutout-j {
-    right: -86px;
-    top: 340px;
-    width: 74px;
-  }
-
-  .cutout-k {
-    left: -84px;
-    top: 500px;
-    width: 78px;
-  }
-
-  .cutout-l {
-    right: -92px;
-    top: 650px;
-    width: 76px;
-  }
-
-  .cutout-m {
-    left: -62px;
-    top: 820px;
-    width: 72px;
-  }
-
-  .cutout-n {
-    right: -88px;
-    top: 815px;
-    width: 119px;
-  }
-
-  .cutout-o {
-    left: -108px;
-    top: 980px;
-    width: 78px;
-  }
-
-  .cutout-p {
-    right: -120px;
-    top: 980px;
-    width: 74px;
-  }
-
-  .cutout-q {
-    right: -96px;
-    top: 760px;
-    width: 68px;
-  }
-
-  .cutout-r {
-    right: -94px;
-    top: 92px;
-    width: 102px;
-  }
-
-  .cutout-s {
-    left: -84px;
-    top: -90px;
-    width: 68px;
+  .manifesto p {
+    margin: 0.35rem 0;
+    font-size: 0.92rem;
+    line-height: 1.45;
   }
 
   .bg-player {
-    top: 10px;
+    top: auto;
     right: 10px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    gap: 0.35rem;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .bg-disc {
+    width: 40px;
+    height: 40px;
+  }
+
+  .bg-nav {
+    width: 20px;
+    height: 20px;
+    font-size: 0.6rem;
+  }
+
+  .bg-meta {
+    margin-right: 0;
+  }
+
+  .bg-title {
+    font-size: 0.74rem;
+  }
+
+  .bg-artist {
+    display: none;
+  }
+
+  .bg-volume {
+    width: 62px;
   }
 }
