@@ -31,12 +31,14 @@ body {
 
 .home-corner-photo {
   position: fixed;
-  top: 12px;
-  left: 12px;
+  top: 8px;
+  left: 8px;
   width: clamp(54px, 6vw, 84px);
   height: auto;
   z-index: 980;
   pointer-events: none;
+  transform: none;
+  -webkit-transform: none;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.48));
 }
 
