@@ -54,14 +54,11 @@
   audio.volume = state.volume;
   audio.muted = state.muted;
 
-  const cornerWrap = document.createElement("div");
-  cornerWrap.style.cssText = "position:fixed;top:8px;left:8px;z-index:980;pointer-events:none;";
-  const cornerImg = document.createElement("img");
-  cornerImg.className = "home-corner-photo";
-  cornerImg.src = "assets/images/cutout-49.png";
-  cornerImg.alt = "cutout 49";
-  cornerImg.onerror = function () { this.style.display = "none"; };
-  cornerWrap.appendChild(cornerImg);
+  var cutout49 = document.createElement("img");
+  cutout49.src = "assets/images/cutout-49.png";
+  cutout49.alt = "cutout 49";
+  cutout49.style.cssText = "position:fixed;top:8px;left:8px;z-index:980;pointer-events:none;display:block;width:clamp(54px,6vw,84px);height:auto;";
+  cutout49.onerror = function () { this.style.display = "none"; };
 
   const ui = document.createElement("div");
   ui.className = "bg-player";
@@ -362,12 +359,12 @@
     Array.from(nextDoc.body.children).forEach(function (node) {
       const tag = node.tagName.toLowerCase();
       if (tag === "script") return;
-      if (node.classList && node.classList.contains("home-corner-wrap")) return;
+      if (node === cutout49) return;
       nodes.push(node.cloneNode(true));
     });
 
     document.body.innerHTML = "";
-    document.body.appendChild(cornerWrap);
+    document.body.appendChild(cutout49);
     nodes.forEach(function (node) {
       document.body.appendChild(node);
     });
@@ -433,7 +430,7 @@
 
   window.addEventListener("resize", layoutExtraCutouts);
 
-  document.body.appendChild(cornerWrap);
+  document.body.appendChild(cutout49);
   document.body.appendChild(ui);
   placeCutoutOnPage();
   updateUI();

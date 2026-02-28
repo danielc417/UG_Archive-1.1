@@ -29,12 +29,6 @@ body {
   line-height: 1.7;
 }
 
-.home-corner-photo {
-  display: block;
-  width: clamp(54px, 6vw, 84px);
-  height: auto;
-}
-
 .site-header,
 .site-footer {
   width: min(1000px, 92%);
@@ -486,10 +480,6 @@ h2 {
   body {
     line-height: 1.45;
     padding-bottom: 7.25rem;
-  }
-
-  .home-corner-photo {
-    width: 52px;
   }
 
   .site-header,
