@@ -55,7 +55,7 @@
   audio.muted = state.muted;
 
   const cornerWrap = document.createElement("div");
-  cornerWrap.className = "home-corner-wrap";
+  cornerWrap.style.cssText = "position:fixed;top:8px;left:8px;z-index:980;pointer-events:none;";
   const cornerImg = document.createElement("img");
   cornerImg.className = "home-corner-photo";
   cornerImg.src = "assets/images/cutout-49.png";

@@ -29,19 +29,10 @@ body {
   line-height: 1.7;
 }
 
-.home-corner-wrap {
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: 980;
-  pointer-events: none;
-}
-
 .home-corner-photo {
   display: block;
   width: clamp(54px, 6vw, 84px);
   height: auto;
-  filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.48));
 }
 
 .site-header,
