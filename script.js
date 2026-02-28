@@ -54,6 +54,15 @@
   audio.volume = state.volume;
   audio.muted = state.muted;
 
+  const cornerWrap = document.createElement("div");
+  cornerWrap.className = "home-corner-wrap";
+  const cornerImg = document.createElement("img");
+  cornerImg.className = "home-corner-photo";
+  cornerImg.src = "assets/images/cutout-49.png";
+  cornerImg.alt = "cutout 49";
+  cornerImg.onerror = function () { this.style.display = "none"; };
+  cornerWrap.appendChild(cornerImg);
+
   const ui = document.createElement("div");
   ui.className = "bg-player";
   ui.innerHTML = [
@@ -351,12 +360,14 @@
     const nodes = [];
 
     Array.from(nextDoc.body.children).forEach(function (node) {
-      if (node.tagName.toLowerCase() !== "script") {
-        nodes.push(node.cloneNode(true));
-      }
+      const tag = node.tagName.toLowerCase();
+      if (tag === "script") return;
+      if (node.classList && node.classList.contains("home-corner-wrap")) return;
+      nodes.push(node.cloneNode(true));
     });
 
     document.body.innerHTML = "";
+    document.body.appendChild(cornerWrap);
     nodes.forEach(function (node) {
       document.body.appendChild(node);
     });
@@ -422,6 +433,7 @@
 
   window.addEventListener("resize", layoutExtraCutouts);
 
+  document.body.appendChild(cornerWrap);
   document.body.appendChild(ui);
   placeCutoutOnPage();
   updateUI();
