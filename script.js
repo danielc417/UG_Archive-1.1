@@ -409,7 +409,8 @@
   });
 
   function isHomePath(pathname) {
-    return pathname === "/" || pathname.endsWith("/index.html");
+    const path = (pathname || "").toLowerCase();
+    return path === "/" || path.endsWith("/index.html") || path.endsWith("/");
   }
 
   function placeCutoutOnPage() {

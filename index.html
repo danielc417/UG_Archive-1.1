@@ -4,113 +4,89 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>The Underground</title>
+    <script>
+      (function () {
+        var path = window.location.pathname;
+        var hasFileExtension = /\/[^/]+\.[^/]+$/.test(path);
+        if (path.endsWith("/") || hasFileExtension) return;
+        window.location.replace(path + "/" + window.location.search + window.location.hash);
+      })();
+    </script>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <header class="site-header">
-      <img
-  src="assets/images/cutout-01.png"
-  alt="artist"
-  class="artist-cutout cutout-a"
-/>
       <h1>Underground Music Archives and Evolution</h1>
       <p class="lead">
         This era of underground rap is not one lane. It is a network of scenes, sounds, producers, and internet-born
         communities constantly rewriting what rap can be.
       </p>
     </header>
-  
+
     <main class="content-wrap">
-      <main class="content-wrap">
-  <!-- floating cutout images -->
-  <div class="artist-cutout-layer">
-    <img src="assets/images/cutout-01.png" alt="artist 1" class="artist-cutout cutout-a" />
-    <img src="assets/images/cutout-02.png" alt="artist 2" class="artist-cutout cutout-b" />
-    <img src="assets/images/cutout-03.png" alt="artist 3" class="artist-cutout cutout-c" />
-    <img src="assets/images/cutout-04.png" alt="artist 4" class="artist-cutout cutout-d" />
-    <img src="assets/images/cutout-05.png" alt="artist 5" class="artist-cutout cutout-e" />
-    <img src="assets/images/cutout-06.png" alt="artist 6" class="artist-cutout cutout-f" />
-    <img src="assets/images/cutout-07.png" alt="artist 7" class="artist-cutout cutout-g" />
-    <img src="assets/images/cutout-08.png" alt="artist 8" class="artist-cutout cutout-h" />
-    <img src="assets/images/cutout-09.png" alt="artist 9" class="artist-cutout cutout-i" />
-    <img src="assets/images/cutout-10.png" alt="artist 10" class="artist-cutout cutout-j" />
-    <img src="assets/images/cutout-11.png" alt="artist 11" class="artist-cutout cutout-k" />
-    <img src="assets/images/cutout-12.png" alt="artist 12" class="artist-cutout cutout-l" />
-    <img src="assets/images/cutout-13.png" alt="artist 13" class="artist-cutout cutout-m" />
-    <img src="assets/images/cutout-14.png" alt="artist 14" class="artist-cutout cutout-n" />
-    <img src="assets/images/cutout-15.png" alt="artist 15" class="artist-cutout cutout-o" />
-    <img src="assets/images/cutout-16.png" alt="artist 16" class="artist-cutout cutout-p" />
-    <img src="assets/images/cutout-17.png" alt="artist 17" class="artist-cutout cutout-q" />
-    <img src="assets/images/cutout-18.png" alt="artist 18" class="artist-cutout cutout-r" />
-    <img src="assets/images/cutout-19.png" alt="artist 19" class="artist-cutout cutout-s" />
-    <img src="assets/images/cutout-20.png" class="artist-cutout cutout-t" />
-<img src="assets/images/cutout-21.png" class="artist-cutout cutout-u" />
-<img src="assets/images/cutout-22.png" class="artist-cutout cutout-v" />
-<img src="assets/images/cutout-23.png" class="artist-cutout cutout-w" />
-<img src="assets/images/cutout-24.png" class="artist-cutout cutout-x" />
-<img src="assets/images/cutout-25.png" class="artist-cutout cutout-y" />
-<img src="assets/images/cutout-26.png" class="artist-cutout cutout-z" />
-<img src="assets/images/cutout-27.png" class="artist-cutout cutout-aa" />
-<img src="assets/images/cutout-28.png" class="artist-cutout cutout-ab" />
-<img src="assets/images/cutout-29.png" class="artist-cutout cutout-ac" />
-<img src="assets/images/cutout-30.png" class="artist-cutout cutout-ad" />
-<img src="assets/images/cutout-31.png" class="artist-cutout cutout-ae" />
-<img src="assets/images/cutout-32.png" class="artist-cutout cutout-af" />
-<img src="assets/images/cutout-33.png" class="artist-cutout cutout-ag" />
-<img src="assets/images/cutout-34.png" class="artist-cutout cutout-ah" />
-<img src="assets/images/cutout-35.png" class="artist-cutout cutout-ai" />
-<img src="assets/images/cutout-36.png" class="artist-cutout cutout-aj" />
-<img src="assets/images/cutout-37.png" class="artist-cutout cutout-ak" />
-<img src="assets/images/cutout-38.png" class="artist-cutout cutout-al" />
-<img src="assets/images/cutout-39.png" class="artist-cutout cutout-am" />
-<img src="assets/images/cutout-40.png" class="artist-cutout cutout-an" />
-<img src="assets/images/cutout-41.png" class="artist-cutout cutout-ao" />
-<img src="assets/images/cutout-42.png" class="artist-cutout cutout-ap" />
-<img src="assets/images/cutout-43.png" class="artist-cutout cutout-aq" />
-<img src="assets/images/cutout-44.png" class="artist-cutout cutout-ar" />
-<img src="assets/images/cutout-45.png" class="artist-cutout cutout-as" />
-  </div>
-  <!-- end floating cutout images -->
       <section class="manifesto">
         <h2>The SoundCloud Era (2015-2019)</h2>
         <p>
-          The SoundCloud era (2015-2019) laid the groundwork for what underground rap is today. It&rsquo;s when XXXTentacion, Lil Uzi Vert, Juice WRLD, and Playboi Carti separated from mainstream distribution and reached listeners entirely over the internet. The music was rugged, personal, and sometimes distorted on purpose. Tracks were shorter, more digestible, and closely related to younger generations, anime, and the internet.
+          The SoundCloud era (2015-2019) laid the groundwork for what underground rap is today. It&rsquo;s when XXXTentacion,
+          Lil Uzi Vert, Juice WRLD, and Playboi Carti separated from mainstream distribution and reached listeners
+          entirely over the internet. The music was rugged, personal, and sometimes distorted on purpose. Tracks were
+          shorter, more digestible, and closely related to younger generations, anime, and the internet.
         </p>
         <p>
-          It showed the world that with or without the support of radio, angst, anger, and individuality can be successful. Influences from Chief Keef&rsquo;s drill and minimalism, Future&rsquo;s trap melodies, Young Thug&rsquo;s style of vocal delivery, Kanye West&rsquo;s trailblazing, and Kid Cudi&rsquo;s emotional lyrics all paved the way for this underground SoundCloud movement. It was more than just a genre, it was a statement of independence through the power of the internet.
+          It showed the world that with or without the support of radio, angst, anger, and individuality can be
+          successful. Influences from Chief Keef&rsquo;s drill and minimalism, Future&rsquo;s trap melodies, Young Thug&rsquo;s style
+          of vocal delivery, Kanye West&rsquo;s trailblazing, and Kid Cudi&rsquo;s emotional lyrics all paved the way for this
+          underground SoundCloud movement. It was more than just a genre, it was a statement of independence through
+          the power of the internet.
         </p>
       </section>
 
       <section class="manifesto">
         <h2>Reconstruction (2020-2023)</h2>
         <p>
-          Fast forward to 2020-2023, the underground was reconstructed in a more sinister, digital form. Ken Carson, Destroy Lonely, Summrs, Autumn!, and Kankan spearheaded a movement often linked to rage production, hyperactive synths, and aesthetic-based collectives such as Slayworld and Opium.
+          Fast forward to 2020-2023, the underground was reconstructed in a more sinister, digital form. Ken Carson,
+          Destroy Lonely, Summrs, Autumn!, and Kankan spearheaded a movement often linked to rage production,
+          hyperactive synths, and aesthetic-based collectives such as Slayworld and Opium.
         </p>
         <p>
-          With Playboi Carti&rsquo;s <em>Whole Lotta Red</em> having a significant impact on the sound of this generation, high energy instrumentation, distorted bass, and fashion-branded branding were central to the era. The internet was no longer the starting point, but the primary platform. Discord servers, TikTok clips, and online micro-communities had an impact on rising acts. This was the part where emotional SoundCloud rap had evolved into a more turbulent, performance-based, and image-based underground scene.
+          With Playboi Carti&rsquo;s <em>Whole Lotta Red</em> having a significant impact on the sound of this generation,
+          high energy instrumentation, distorted bass, and fashion-branded branding were central to the era. The
+          internet was no longer the starting point, but the primary platform. Discord servers, TikTok clips, and
+          online micro-communities had an impact on rising acts. This was the part where emotional SoundCloud rap had
+          evolved into a more turbulent, performance-based, and image-based underground scene.
         </p>
       </section>
 
       <section class="manifesto">
         <h2>Hyper-Digital Period (2024-2026)</h2>
         <p>
-          Now to 2024-2026, the hyper-digital period of the underground begins. The second wave of artists such as Nettspend, Osamason, xaviersobased, Nine Vicious and so on have grown up totally in an age of online presence. The music is faster, more distorted and more unstructured, relying heavily on blown out production, slang and algorithmic success.
+          Now to 2024-2026, the hyper-digital period of the underground begins. The second wave of artists such as
+          Nettspend, Osamason, xaviersobased, Nine Vicious and so on have grown up totally in an age of online
+          presence. The music is faster, more distorted and more unstructured, relying heavily on blown out production,
+          slang and algorithmic success.
         </p>
         <p>
-          Songs are very loud and short, made to grab your attention immediately. The whole era progresses quickly, with trends and styles emerging every few months rather than every few years. The emphasis is less on quality and more on hype and presence. It&rsquo;s indicative of a new generation who are used to digesting and creating music at an incredible rate.
+          Songs are very loud and short, made to grab your attention immediately. The whole era progresses quickly,
+          with trends and styles emerging every few months rather than every few years. The emphasis is less on
+          quality and more on hype and presence. It&rsquo;s indicative of a new generation who are used to digesting and
+          creating music at an incredible rate.
         </p>
       </section>
 
       <section class="manifesto">
         <h2>Timeline And What Comes Next</h2>
         <p>
-          Each one has picked up where the last one left off. SoundCloud emo-rebellion and DIY self-reliance. 2020-2023 anger and communalism. 2024-2026 digital chaos and internet-centricity. All of them forming a sort of timeline of underground rap&rsquo;s transition from blown-out-bedroom recordings to a fully-flowing internet hydra.
+          Each one has picked up where the last one left off. SoundCloud emo-rebellion and DIY self-reliance.
+          2020-2023 anger and communalism. 2024-2026 digital chaos and internet-centricity. All of them forming a sort
+          of timeline of underground rap&rsquo;s transition from blown-out-bedroom recordings to a fully-flowing internet
+          hydra.
         </p>
         <p>
-          And that&rsquo;s just the start. Beyond those three waves, there are micro-genres and sub-movements to delve into, ranging from pluggnb and sigilkore to underground drill, experimental trap, and regional internet scenes. The underground never stands still. This is a website to document, analyze, and delve into every stratum of it.
+          And that&rsquo;s just the start. Beyond those three waves, there are micro-genres and sub-movements to delve into,
+          ranging from pluggnb and sigilkore to underground drill, experimental trap, and regional internet scenes. The
+          underground never stands still. This is a website to document, analyze, and delve into every stratum of it.
         </p>
       </section>
-
     </main>
 
     <footer class="site-footer">
