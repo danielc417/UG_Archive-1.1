@@ -281,43 +281,9 @@
       saveState(audio);
     }
 
-    function lockPlayerPosition() {
-      const isMobile = window.matchMedia("(max-width: 640px)").matches;
-      const offset = isMobile ? 10 : 12;
-      ui.style.setProperty("position", "fixed", "important");
-      ui.style.setProperty("top", offset + "px", "important");
-      ui.style.setProperty("right", offset + "px", "important");
-      ui.style.setProperty("left", "auto", "important");
-      ui.style.setProperty("bottom", "auto", "important");
-      ui.style.setProperty("transform", "none", "important");
-      ui.style.setProperty("margin", "0", "important");
-    }
-
-    let lockRafId = 0;
-    function tickPlayerLock() {
-      lockPlayerPosition();
-      lockRafId = window.requestAnimationFrame(tickPlayerLock);
-    }
-
     window.addEventListener("pagehide", persistBeforeLeave);
     window.addEventListener("beforeunload", persistBeforeLeave);
     document.body.appendChild(ui);
-    lockPlayerPosition();
-    window.addEventListener("resize", lockPlayerPosition, { passive: true });
-    window.addEventListener("scroll", lockPlayerPosition, { passive: true });
-    document.addEventListener("scroll", lockPlayerPosition, { capture: true, passive: true });
-    if (window.visualViewport) {
-      window.visualViewport.addEventListener("resize", lockPlayerPosition, { passive: true });
-      window.visualViewport.addEventListener("scroll", lockPlayerPosition, { passive: true });
-    }
-    lockRafId = window.requestAnimationFrame(tickPlayerLock);
-    window.addEventListener(
-      "pagehide",
-      function () {
-        if (lockRafId) window.cancelAnimationFrame(lockRafId);
-      },
-      { once: true }
-    );
     updateUI();
 
     if (state.playing) {
