@@ -134,8 +134,10 @@ h2 {
   align-items: center;
   gap: 0.6rem;
   padding: 0.45rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.55);
+  border-radius: 12px;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.55);
   font-family: "Comic Sans MS", "Trebuchet MS", sans-serif;
   pointer-events: auto;
   transform: none !important;
