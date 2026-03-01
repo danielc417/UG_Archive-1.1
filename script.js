@@ -302,49 +302,201 @@
   function layoutCutouts(layer, container) {
     const cutouts = Array.from(layer.querySelectorAll(".artist-cutout"));
     if (!cutouts.length) return;
+    const osamaCutout = document.querySelector(".osama-cutout");
+    let osamaTarget = null;
 
     const isMobile = window.matchMedia("(max-width: 640px)").matches;
-    const laneOffsets = isMobile ? [-34, -18, -34, -18] : [-210, -150, -210, -150];
-    const laneSides = ["left", "left", "right", "right"];
-    const baseTop = isMobile ? -14 : -44;
-    const stepY = isMobile ? 52 : 84;
-    const baseWidth = isMobile ? 34 : 76;
-    const maxTop = Math.max(900, container.scrollHeight - (isMobile ? 100 : 140));
+    const content = document.querySelector("main.content-wrap");
+    const contentRect = content ? content.getBoundingClientRect() : null;
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = container.clientWidth;
+    const containerHeight = Math.max(container.scrollHeight, window.innerHeight + 240);
+    const baseTop = isMobile ? 12 : 24;
+    const maxTop = containerHeight - (isMobile ? 100 : 140);
+    const baseWidth = isMobile ? 47 : 105;
+    const minGap = isMobile ? 18 : 26;
+    const laneCount = isMobile ? 4 : 8;
+
+    let safeLeft = Math.round(containerWidth * 0.23);
+    let safeRight = Math.round(containerWidth * 0.77);
+    if (contentRect) {
+      safeLeft = Math.max(0, Math.round(contentRect.left - containerRect.left - 16));
+      safeRight = Math.min(containerWidth, Math.round(contentRect.right - containerRect.left + 16));
+    }
+
+    const leftLanes = [];
+    const rightLanes = [];
+    const leftCount = Math.floor(laneCount / 2);
+    const rightCount = laneCount - leftCount;
+    const leftWidth = Math.max(40, safeLeft - 14);
+    const rightStart = Math.min(containerWidth - 40, safeRight + 14);
+    const rightWidth = Math.max(40, containerWidth - rightStart - 14);
+
+    for (let i = 0; i < leftCount; i += 1) {
+      leftLanes.push({
+        side: "left",
+        xBase: Math.round((i + 0.5) * (leftWidth / Math.max(1, leftCount))),
+        nextTop: baseTop + i * (isMobile ? 22 : 28)
+      });
+    }
+    for (let i = 0; i < rightCount; i += 1) {
+      rightLanes.push({
+        side: "right",
+        xBase: Math.round(rightStart + (i + 0.5) * (rightWidth / Math.max(1, rightCount))),
+        nextTop: baseTop + i * (isMobile ? 20 : 24)
+      });
+    }
+
+    const lanes = leftLanes.concat(rightLanes);
 
     cutouts.forEach(function (img, index) {
-      const laneIndex = index % laneOffsets.length;
-      const row = Math.floor(index / laneOffsets.length);
-      const jitter = ((index % 3) - 1) * (isMobile ? 5 : 9);
-      let top = baseTop + row * stepY + jitter;
+      const width = baseWidth + ((index % 5) - 2) * (isMobile ? 2 : 4);
+      const safeWidth = Math.max(26, width);
+      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
+      const estHeight = safeWidth * Math.max(0.9, Math.min(2.5, ratio));
+      const lane = lanes.reduce(function (best, current) {
+        return current.nextTop < best.nextTop ? current : best;
+      }, lanes[0]);
+
+      let top = lane.nextTop;
       if (top > maxTop) {
-        top = baseTop + (index % 18) * (isMobile ? 44 : 66);
+        top = baseTop + (index % 12) * (isMobile ? 44 : 66);
       }
 
-      const width = baseWidth + ((index % 5) - 2) * (isMobile ? 2 : 4);
-      const rotation = (laneSides[laneIndex] === "left" ? -1 : 1) * (4 + (index % 4) * 2);
+      const rotation = (lane.side === "left" ? -1 : 1) * (2 + (index % 4) * 2);
+      const jitterX = ((index % 3) - 1) * (isMobile ? 3 : 6);
 
       img.style.top = Math.round(top) + "px";
-      img.style.width = Math.max(26, width) + "px";
+      img.style.width = safeWidth + "px";
       img.style.left = "";
       img.style.right = "";
-      img.style.transform = "rotate(" + rotation + "deg)";
+      img.style.setProperty("--cutout-rot", rotation + "deg");
+      img.style.setProperty("--sway-dur", (1.5 + (index % 5) * 0.18).toFixed(2) + "s");
+      img.style.setProperty("--sway-delay", (-0.15 * (index % 7)).toFixed(2) + "s");
       img.style.zIndex = String(110 + (index % 6));
 
-      if (laneSides[laneIndex] === "left") {
-        img.style.left = laneOffsets[laneIndex] + "px";
+      if (lane.side === "left") {
+        const left = Math.max(6, lane.xBase + jitterX - safeWidth / 2);
+        img.style.left = Math.round(left) + "px";
       } else {
-        img.style.right = laneOffsets[laneIndex] + "px";
+        const left = Math.min(containerWidth - safeWidth - 6, lane.xBase + jitterX - safeWidth / 2);
+        img.style.left = Math.round(left) + "px";
       }
 
-      // Keep top-right area cleaner for the fixed music player.
-      if (!isMobile && laneSides[laneIndex] === "right" && top < 130) {
-        img.style.top = Math.round(top + 130) + "px";
+      if (img.src.indexOf("cutout-01.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.max(0, Math.round(currentLeft - (isMobile ? 22 : 42))) + "px";
       }
+
+      if (img.src.indexOf("cutout-26.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 12 : 32)) + "px";
+        img.style.width = Math.round(safeWidth * 1.07) + "px";
+        const currentRotation = rotation - (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-28.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft + (isMobile ? 12 : 26)) + "px";
+        img.style.width = Math.round(safeWidth * 1.1) + "px";
+      }
+
+      if (img.src.indexOf("cutout-19.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 16 : 28)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 8 : 16)) + "px";
+        img.style.width = Math.round(safeWidth * 0.81) + "px";
+      }
+
+      if (img.src.indexOf("cutout-13.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 24 : 44)) + "px";
+        img.style.width = Math.round(safeWidth * 1.5) + "px";
+      }
+
+      if (img.src.indexOf("cutout-07.png") !== -1) {
+        img.style.width = Math.round(safeWidth * 1.25) + "px";
+        const currentRotation = rotation + (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-12.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 20)) + "px";
+        img.style.width = Math.round(safeWidth * 1.1) + "px";
+      }
+
+      if (img.src.indexOf("cutout-03.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 14 : 24)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
+        const currentRotation = rotation + (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-05.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 14 : 24)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 8 : 14)) + "px";
+        img.style.width = Math.round(safeWidth * 1.1) + "px";
+      }
+
+      if (img.src.indexOf("cutout-17.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 10 : 18)) + "px";
+        img.style.left = Math.max(0, Math.round(currentLeft - (isMobile ? 36 : 82))) + "px";
+        img.style.width = Math.round(safeWidth * 2.275) + "px";
+        const currentRotation = rotation - (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-05.png") !== -1 || img.src.indexOf("cutout-07.png") !== -1) {
+        const originalLeft = parseFloat(img.style.left) || 0;
+        const originalTop = parseFloat(img.style.top) || 0;
+        const finalWidth = parseFloat(img.style.width) || safeWidth;
+        const clampedRatio = Math.max(0.9, Math.min(2.5, ratio));
+        const finalHeight = finalWidth * clampedRatio;
+        let stuckLeft = 0;
+        let stuckTop = Math.max(0, Math.round(containerHeight - finalHeight));
+        if (img.src.indexOf("cutout-05.png") !== -1) {
+          osamaTarget = { left: originalLeft, top: originalTop };
+          const liftAmount = isMobile ? 18 : 36;
+          stuckTop = Math.max(0, stuckTop - liftAmount);
+        }
+        if (img.src.indexOf("cutout-07.png") !== -1) {
+          const rightOffset = isMobile ? 36 : 84;
+          const upOffset = isMobile ? 30 : 68;
+          stuckLeft = rightOffset;
+          stuckTop = Math.max(0, stuckTop - upOffset);
+        }
+        img.style.left = stuckLeft + "px";
+        img.style.right = "";
+        img.style.top = stuckTop + "px";
+      }
+
+      lane.nextTop = top + estHeight + minGap;
     });
+
+    if (osamaCutout && osamaTarget) {
+      const rightShift = isMobile ? 8 : 24;
+      const downShift = isMobile ? 24 : 52;
+      osamaCutout.style.left = Math.max(0, Math.round(osamaTarget.left + rightShift)) + "px";
+      osamaCutout.style.top = Math.round(osamaTarget.top + downShift) + "px";
+      osamaCutout.style.right = "auto";
+      osamaCutout.style.bottom = "auto";
+      if (typeof osamaCutout.playbackRate === "number") {
+        osamaCutout.playbackRate = 0.65;
+      }
+    }
   }
 
   function setupCutouts() {
-    const container = document.querySelector("main.content-wrap");
+    const container = document.querySelector(".page-scroll");
     if (!container) return;
 
     const layer = document.createElement("div");
