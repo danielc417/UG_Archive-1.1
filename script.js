@@ -19,7 +19,59 @@
       cover: "assets/images/player-spin-projectpat.jpg"
     }
   ];
+
   const STORAGE_KEY = "underground-mp3-player";
+  const CUTOUT_SOURCES = [
+    "assets/images/osamason-cutout.png",
+    "assets/images/cutout-01.png",
+    "assets/images/cutout-02.png",
+    "assets/images/cutout-03.png",
+    "assets/images/cutout-04.png",
+    "assets/images/cutout-05.png",
+    "assets/images/cutout-06.png",
+    "assets/images/cutout-07.png",
+    "assets/images/cutout-08.png",
+    "assets/images/cutout-09.png",
+    "assets/images/cutout-10.png",
+    "assets/images/cutout-11.png",
+    "assets/images/cutout-12.png",
+    "assets/images/cutout-13.png",
+    "assets/images/cutout-14.png",
+    "assets/images/cutout-15.png",
+    "assets/images/cutout-16.png",
+    "assets/images/cutout-17.png",
+    "assets/images/cutout-18.png",
+    "assets/images/cutout-19.png",
+    "assets/images/cutout-20.png",
+    "assets/images/cutout-21.png",
+    "assets/images/cutout-22.png",
+    "assets/images/cutout-23.png",
+    "assets/images/cutout-24.png",
+    "assets/images/cutout-25.png",
+    "assets/images/cutout-26.png",
+    "assets/images/cutout-27.png",
+    "assets/images/cutout-28.png",
+    "assets/images/cutout-29.png",
+    "assets/images/cutout-30.png",
+    "assets/images/cutout-31.png",
+    "assets/images/cutout-32.png",
+    "assets/images/cutout-33.png",
+    "assets/images/cutout-34.png",
+    "assets/images/cutout-35.png",
+    "assets/images/cutout-36.png",
+    "assets/images/cutout-37.png",
+    "assets/images/cutout-38.png",
+    "assets/images/cutout-39.png",
+    "assets/images/cutout-40.png",
+    "assets/images/cutout-41.png",
+    "assets/images/cutout-42.png",
+    "assets/images/cutout-43.png",
+    "assets/images/cutout-44.png",
+    "assets/images/cutout-45.png",
+    "assets/images/cutout-46.png",
+    "assets/images/cutout-47.png",
+    "assets/images/cutout-48.png"
+  ];
 
   const state = {
     playing: false,
@@ -29,175 +81,28 @@
     trackIndex: 0
   };
 
-  try {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    if (typeof saved.playing === "boolean") state.playing = saved.playing;
-    if (typeof saved.muted === "boolean") state.muted = saved.muted;
-    if (typeof saved.volume === "number") state.volume = Math.max(0, Math.min(1, saved.volume));
-    if (typeof saved.currentTime === "number" && saved.currentTime >= 0) state.currentTime = saved.currentTime;
-    if (typeof saved.trackIndex === "number" && saved.trackIndex >= 0) {
-      state.trackIndex = saved.trackIndex % TRACKS.length;
-    }
-  } catch (_err) {
-    // Ignore invalid local storage.
-  }
+  let lastSavedSecond = -1;
 
   function currentTrack() {
     return TRACKS[state.trackIndex] || TRACKS[0];
   }
 
-  const audio = document.createElement("audio");
-  audio.src = currentTrack().src;
-  audio.loop = false;
-  audio.preload = "auto";
-  audio.autoplay = true;
-  audio.volume = state.volume;
-  audio.muted = state.muted;
-
-  var cutout49 = document.createElement("img");
-  cutout49.className = "cutout-49";
-  cutout49.src = "assets/images/cutout-49.png";
-  cutout49.alt = "cutout 49";
-  cutout49.onerror = function () { this.style.display = "none"; };
-
-  const ui = document.createElement("div");
-  ui.className = "bg-player";
-  ui.innerHTML = [
-    '<button type="button" class="bg-nav bg-prev" aria-label="Previous track" title="Previous track">◀</button>',
-    '<button type="button" class="bg-disc" aria-label="Play background music"><img class="bg-disc-art" src="" alt="Player artwork" /></button>',
-    '<div class="bg-meta"><span class="bg-title"></span><span class="bg-artist"></span></div>',
-    '<button type="button" class="bg-nav bg-next" aria-label="Next track" title="Next track">▶</button>',
-    '<input class="bg-volume" type="range" min="0" max="1" step="0.01" aria-label="Volume" title="Volume" />'
-  ].join("");
-
-  const prevBtn = ui.querySelector(".bg-prev");
-  const nextBtn = ui.querySelector(".bg-next");
-  const playBtn = ui.querySelector(".bg-disc");
-  const discArt = ui.querySelector(".bg-disc-art");
-  const titleEl = ui.querySelector(".bg-title");
-  const artistEl = ui.querySelector(".bg-artist");
-  const volumeInput = ui.querySelector(".bg-volume");
-  let lastSavedSecond = -1;
-
-  const cutoutLayer = document.createElement("div");
-  cutoutLayer.className = "artist-cutout-layer";
-  cutoutLayer.innerHTML = [
-    '<img class="artist-cutout cutout-a" src="assets/images/cutout-01.png" alt="Artist cutout 1" />',
-    '<img class="artist-cutout cutout-b" src="assets/images/cutout-02.png" alt="Artist cutout 2" />',
-    '<img class="artist-cutout cutout-c" src="assets/images/cutout-03.png" alt="Artist cutout 3" />',
-    '<img class="artist-cutout cutout-d" src="assets/images/cutout-04.png" alt="Artist cutout 4" />',
-    '<img class="artist-cutout cutout-e" src="assets/images/cutout-05.png" alt="Artist cutout 5" />',
-    '<img class="artist-cutout cutout-f" src="assets/images/cutout-06.png" alt="Artist cutout 6" />',
-    '<img class="artist-cutout cutout-g" src="assets/images/cutout-07.png" alt="Artist cutout 7" />',
-    '<img class="artist-cutout cutout-h" src="assets/images/osamason-cutout.png" alt="OsamaSon cutout" />',
-    '<img class="artist-cutout cutout-i" src="assets/images/cutout-08.png" alt="Artist cutout 8" />',
-    '<img class="artist-cutout cutout-j" src="assets/images/cutout-09.png" alt="Artist cutout 9" />',
-    '<img class="artist-cutout cutout-k" src="assets/images/cutout-10.png" alt="Artist cutout 10" />',
-    '<img class="artist-cutout cutout-l" src="assets/images/cutout-11.png" alt="Artist cutout 11" />',
-    '<img class="artist-cutout cutout-m" src="assets/images/cutout-12.png" alt="Artist cutout 12" />',
-    '<img class="artist-cutout cutout-n" src="assets/images/cutout-13.png" alt="Artist cutout 13" />',
-    '<img class="artist-cutout cutout-o" src="assets/images/cutout-14.png" alt="Artist cutout 14" />',
-    '<img class="artist-cutout cutout-p" src="assets/images/cutout-15.png" alt="Artist cutout 15" />',
-    '<img class="artist-cutout cutout-q" src="assets/images/cutout-16.png" alt="Artist cutout 16" />',
-    '<img class="artist-cutout cutout-r" src="assets/images/cutout-17.png" alt="Artist cutout 17" />',
-    '<img class="artist-cutout cutout-s" src="assets/images/cutout-18.png" alt="Artist cutout 18" />'
-  ].join("");
-
-  const EXTRA_CUTOUT_START = 19;
-  const EXTRA_CUTOUT_END = 48;
-  for (let i = EXTRA_CUTOUT_START; i <= EXTRA_CUTOUT_END; i += 1) {
-    const num = String(i).padStart(2, "0");
-    const img = document.createElement("img");
-    img.className = "artist-cutout cutout-extra";
-    img.src = "assets/images/cutout-" + num + ".png";
-    img.alt = "Artist cutout " + i;
-    cutoutLayer.appendChild(img);
+  function loadState() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+      if (typeof saved.playing === "boolean") state.playing = saved.playing;
+      if (typeof saved.muted === "boolean") state.muted = saved.muted;
+      if (typeof saved.volume === "number") state.volume = Math.max(0, Math.min(1, saved.volume));
+      if (typeof saved.currentTime === "number" && saved.currentTime >= 0) state.currentTime = saved.currentTime;
+      if (typeof saved.trackIndex === "number" && saved.trackIndex >= 0) {
+        state.trackIndex = saved.trackIndex % TRACKS.length;
+      }
+    } catch (_err) {
+      // Ignore invalid local storage.
+    }
   }
 
-  Array.from(cutoutLayer.querySelectorAll(".artist-cutout")).forEach(function (img) {
-    img.addEventListener("load", layoutExtraCutouts);
-  });
-
-  function layoutExtraCutouts() {
-    const cutouts = Array.from(cutoutLayer.querySelectorAll(".artist-cutout"));
-    const isMobile = window.matchMedia("(max-width: 640px)").matches;
-    const container = document.querySelector("main.content-wrap");
-    const containerHeight = container ? container.offsetHeight : (isMobile ? 1500 : 2000);
-    const topStart = isMobile ? -14 : -56;
-    const maxTop = Math.max(900, containerHeight - (isMobile ? 160 : 220));
-    const laneConfig = isMobile
-      ? [
-          { side: "left", offset: -90 },
-          { side: "left", offset: -58 },
-          { side: "right", offset: -90 },
-          { side: "right", offset: -58 }
-        ]
-      : [
-          { side: "left", offset: -352 },
-          { side: "left", offset: -296 },
-          { side: "left", offset: -240 },
-          { side: "right", offset: -352 },
-          { side: "right", offset: -296 },
-          { side: "right", offset: -240 }
-        ];
-    const lanes = laneConfig.map(function (lane, idx) {
-      return {
-        side: lane.side,
-        offset: lane.offset,
-        nextTop: topStart + (idx % 3) * (isMobile ? 12 : 18)
-      };
-    });
-    const baseWidth = isMobile ? 28 : 62;
-    const widthStep = isMobile ? 3 : 5;
-    const minGap = isMobile ? 12 : 18;
-    const topJitter = isMobile ? 10 : 14;
-
-    cutouts.forEach(function (img, idx) {
-      img.style.display = "";
-      const lane = lanes.reduce(function (best, current) {
-        return current.nextTop < best.nextTop ? current : best;
-      }, lanes[0]);
-
-      const width = baseWidth + (idx % 7) * widthStep;
-      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
-      const clampedRatio = Math.max(0.9, Math.min(2.4, ratio));
-      const estimatedHeight = width * clampedRatio;
-      let top = lane.nextTop + ((idx % 2) * topJitter - topJitter / 2);
-
-      // Wrap long lanes upward to keep spacing balanced on very long pages.
-      if (top > maxTop) {
-        top = topStart + (idx % 9) * (isMobile ? 34 : 44);
-      }
-
-      const rotationBase = 3 + (idx % 4) * (isMobile ? 1.5 : 2);
-      const rotation = (lane.side === "left" ? -1 : 1) * rotationBase;
-
-      img.style.top = Math.round(top) + "px";
-      img.style.left = "";
-      img.style.right = "";
-      img.style.width = width + "px";
-      img.style.transform = "rotate(" + rotation + "deg)";
-      img.style.zIndex = String(108 + (idx % 10));
-
-      if (lane.side === "left") {
-        img.style.left = lane.offset + "px";
-      } else {
-        img.style.right = lane.offset + "px";
-      }
-
-      lane.nextTop = top + estimatedHeight + minGap;
-    });
-
-    // Keep the top-right music control area cleaner.
-    cutouts.forEach(function (img) {
-      const top = parseFloat(img.style.top) || 0;
-      if (!isMobile && img.style.right && top < 116) {
-        img.style.top = top + 120 + "px";
-      }
-    });
-  }
-
-  function saveState() {
+  function saveState(audio) {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -210,232 +115,257 @@
     );
   }
 
-  function applyTrackMeta() {
-    const track = currentTrack();
-    discArt.src = track.cover;
-    titleEl.textContent = track.title;
-    artistEl.textContent = track.artist;
-    playBtn.title = track.title + " - " + track.artist;
+  function createPlayerUI() {
+    const ui = document.createElement("div");
+    ui.className = "bg-player";
+    ui.innerHTML = [
+      '<button type="button" class="bg-nav bg-prev" aria-label="Previous track" title="Previous track">◀</button>',
+      '<button type="button" class="bg-disc" aria-label="Play background music"><img class="bg-disc-art" src="" alt="Player artwork" /></button>',
+      '<div class="bg-meta"><span class="bg-title"></span><span class="bg-artist"></span></div>',
+      '<button type="button" class="bg-nav bg-next" aria-label="Next track" title="Next track">▶</button>',
+      '<input class="bg-volume" type="range" min="0" max="1" step="0.01" aria-label="Volume" title="Volume" />'
+    ].join("");
+    return ui;
   }
 
-  function updateUI() {
-    ui.classList.toggle("is-playing", state.playing);
-    playBtn.setAttribute("aria-label", state.playing ? "Pause background music" : "Play background music");
-    volumeInput.value = String(state.volume);
-    applyTrackMeta();
+  function createAudio() {
+    const audio = new Audio();
+    audio.src = currentTrack().src;
+    audio.loop = false;
+    audio.preload = "auto";
+    audio.autoplay = true;
+    audio.volume = state.volume;
+    audio.muted = state.muted;
+    return audio;
   }
 
-  async function tryPlay() {
-    try {
-      await audio.play();
-      state.playing = true;
-    } catch (_err) {
-      state.playing = false;
+  function setupPlayer() {
+    loadState();
+
+    const audio = createAudio();
+    const ui = createPlayerUI();
+    const prevBtn = ui.querySelector(".bg-prev");
+    const nextBtn = ui.querySelector(".bg-next");
+    const playBtn = ui.querySelector(".bg-disc");
+    const discArt = ui.querySelector(".bg-disc-art");
+    const titleEl = ui.querySelector(".bg-title");
+    const artistEl = ui.querySelector(".bg-artist");
+    const volumeInput = ui.querySelector(".bg-volume");
+
+    function applyTrackMeta() {
+      const track = currentTrack();
+      discArt.src = track.cover;
+      titleEl.textContent = track.title;
+      artistEl.textContent = track.artist;
+      playBtn.title = track.title + " - " + track.artist;
     }
-    updateUI();
-  }
 
-  function pauseAudio() {
-    audio.pause();
-    state.playing = false;
-    updateUI();
-  }
+    function updateUI() {
+      ui.classList.toggle("is-playing", state.playing);
+      playBtn.setAttribute("aria-label", state.playing ? "Pause background music" : "Play background music");
+      volumeInput.value = String(state.volume);
+      applyTrackMeta();
+    }
 
-  async function startWithSound() {
-    state.muted = false;
-    audio.muted = false;
-    await tryPlay();
-    saveState();
-  }
-
-  async function playTrack(index) {
-    state.trackIndex = ((index % TRACKS.length) + TRACKS.length) % TRACKS.length;
-    state.currentTime = 0;
-    const track = currentTrack();
-    audio.src = track.src;
-    audio.currentTime = 0;
-    applyTrackMeta();
-    if (state.playing) {
-      await tryPlay();
-    } else {
+    async function tryPlay() {
+      try {
+        await audio.play();
+        state.playing = true;
+      } catch (_err) {
+        state.playing = false;
+      }
       updateUI();
     }
-    saveState();
-  }
 
-  async function changeTrack(delta) {
-    state.playing = true;
-    await playTrack(state.trackIndex + delta);
-    saveState();
-  }
-
-  playBtn.addEventListener("click", async function () {
-    if (state.playing) {
-      pauseAudio();
-      return;
+    function pauseAudio() {
+      audio.pause();
+      state.playing = false;
+      updateUI();
     }
 
-    await startWithSound();
-  });
-
-  prevBtn.addEventListener("click", async function () {
-    await changeTrack(-1);
-  });
-
-  nextBtn.addEventListener("click", async function () {
-    await changeTrack(1);
-  });
-
-  volumeInput.addEventListener("input", function () {
-    const nextVolume = Number(volumeInput.value);
-    state.volume = Number.isFinite(nextVolume) ? Math.max(0, Math.min(1, nextVolume)) : state.volume;
-    audio.volume = state.volume;
-    saveState();
-  });
-
-  // First user interaction anywhere enables sound and keeps playback going.
-  async function unlockOnFirstInteraction() {
-    if (!state.playing) {
-      await startWithSound();
-      return;
+    async function startWithSound() {
+      state.muted = false;
+      audio.muted = false;
+      await tryPlay();
+      saveState(audio);
     }
 
-    state.muted = false;
-    audio.muted = false;
-    updateUI();
-    saveState();
-  }
+    async function playTrack(index) {
+      state.trackIndex = ((index % TRACKS.length) + TRACKS.length) % TRACKS.length;
+      state.currentTime = 0;
+      const track = currentTrack();
 
-  ["pointerdown", "touchstart", "keydown"].forEach(function (eventName) {
-    document.addEventListener(eventName, unlockOnFirstInteraction, { once: true });
-  });
+      audio.src = track.src;
+      audio.currentTime = 0;
+      applyTrackMeta();
 
-  audio.addEventListener("loadedmetadata", function () {
-    if (state.currentTime > 0 && Number.isFinite(audio.duration)) {
-      const safeTime = Math.min(state.currentTime, Math.max(0, audio.duration - 0.5));
-      audio.currentTime = safeTime;
+      if (state.playing) {
+        await tryPlay();
+      } else {
+        updateUI();
+      }
+
+      saveState(audio);
     }
-  });
 
-  audio.addEventListener("ended", function () {
-    state.playing = true;
-    playTrack(state.trackIndex + 1);
-  });
+    async function changeTrack(delta) {
+      state.playing = true;
+      await playTrack(state.trackIndex + delta);
+      saveState(audio);
+    }
 
-  audio.addEventListener("timeupdate", function () {
-    if (audio.currentTime > 0) {
+    playBtn.addEventListener("click", async function () {
+      if (state.playing) {
+        pauseAudio();
+      } else {
+        await startWithSound();
+      }
+    });
+
+    prevBtn.addEventListener("click", async function () {
+      await changeTrack(-1);
+    });
+
+    nextBtn.addEventListener("click", async function () {
+      await changeTrack(1);
+    });
+
+    volumeInput.addEventListener("input", function () {
+      const nextVolume = Number(volumeInput.value);
+      state.volume = Number.isFinite(nextVolume) ? Math.max(0, Math.min(1, nextVolume)) : state.volume;
+      audio.volume = state.volume;
+      saveState(audio);
+    });
+
+    async function unlockOnFirstInteraction() {
+      if (!state.playing) {
+        await startWithSound();
+        return;
+      }
+
+      state.muted = false;
+      audio.muted = false;
+      updateUI();
+      saveState(audio);
+    }
+
+    ["pointerdown", "touchstart", "keydown"].forEach(function (eventName) {
+      document.addEventListener(eventName, unlockOnFirstInteraction, { once: true });
+    });
+
+    audio.addEventListener("loadedmetadata", function () {
+      if (state.currentTime > 0 && Number.isFinite(audio.duration)) {
+        const safeTime = Math.min(state.currentTime, Math.max(0, audio.duration - 0.5));
+        audio.currentTime = safeTime;
+      }
+    });
+
+    audio.addEventListener("timeupdate", function () {
+      if (audio.currentTime <= 0) return;
       state.currentTime = audio.currentTime;
-      // Persist progress roughly every second.
+
       const nowSecond = Math.floor(audio.currentTime);
       if (nowSecond !== lastSavedSecond) {
         lastSavedSecond = nowSecond;
-        saveState();
+        saveState(audio);
       }
+    });
+
+    audio.addEventListener("ended", function () {
+      state.playing = true;
+      playTrack(state.trackIndex + 1);
+    });
+
+    function persistBeforeLeave() {
+      state.currentTime = audio.currentTime || state.currentTime;
+      saveState(audio);
     }
-  });
 
-  function persistBeforeLeave() {
-    state.currentTime = audio.currentTime || state.currentTime;
-    saveState();
-  }
-
-  window.addEventListener("pagehide", persistBeforeLeave);
-  window.addEventListener("beforeunload", persistBeforeLeave);
-
-  function isInternalHtmlLink(anchor) {
-    if (!anchor) return false;
-    if (anchor.target && anchor.target !== "_self") return false;
-    const href = anchor.getAttribute("href");
-    if (!href || href.startsWith("#")) return false;
-    const url = new URL(anchor.href, window.location.href);
-    if (url.origin !== window.location.origin) return false;
-    return url.pathname.endsWith(".html") || url.pathname === window.location.pathname;
-  }
-
-  function swapPageContent(nextDoc) {
-    const currentPlayer = ui;
-    const nodes = [];
-
-    Array.from(nextDoc.body.children).forEach(function (node) {
-      const tag = node.tagName.toLowerCase();
-      if (tag === "script") return;
-      if (node === cutout49) return;
-      nodes.push(node.cloneNode(true));
-    });
-
-    document.body.innerHTML = "";
-    document.body.appendChild(cutout49);
-    nodes.forEach(function (node) {
-      document.body.appendChild(node);
-    });
-    document.body.appendChild(currentPlayer);
-    placeCutoutOnPage();
+    window.addEventListener("pagehide", persistBeforeLeave);
+    window.addEventListener("beforeunload", persistBeforeLeave);
+    document.body.appendChild(ui);
     updateUI();
-    window.scrollTo(0, 0);
-  }
 
-  async function navigateWithoutReload(url, push) {
-    try {
-      persistBeforeLeave();
-      const res = await fetch(url.toString(), { credentials: "same-origin" });
-      if (!res.ok) return;
-      const html = await res.text();
-      const parser = new DOMParser();
-      const nextDoc = parser.parseFromString(html, "text/html");
-      document.title = nextDoc.title || document.title;
-      swapPageContent(nextDoc);
-      if (push) {
-        history.pushState({ path: url.pathname }, "", url.pathname);
-      }
-    } catch (_err) {
-      // If fetch navigation fails, allow normal behavior next click.
+    if (state.playing) {
+      tryPlay();
     }
   }
 
-  document.addEventListener("click", function (event) {
-    const anchor = event.target.closest("a");
-    if (!isInternalHtmlLink(anchor)) return;
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    const url = new URL(anchor.href, window.location.href);
-    navigateWithoutReload(url, true);
-  });
-
-  window.addEventListener("popstate", function () {
-    const url = new URL(window.location.href);
-    navigateWithoutReload(url, false);
-  });
-
-  function isHomePath(pathname) {
-    const path = (pathname || "").toLowerCase();
-    return path === "/" || path.endsWith("/index.html") || path.endsWith("/");
+  function createCutoutImage(src, index) {
+    const img = document.createElement("img");
+    img.className = "artist-cutout";
+    img.src = src;
+    img.alt = "Artist cutout " + (index + 1);
+    return img;
   }
 
-  function placeCutoutOnPage() {
-    const shouldShow = isHomePath(window.location.pathname);
+  function layoutCutouts(layer, container) {
+    const cutouts = Array.from(layer.querySelectorAll(".artist-cutout"));
+    if (!cutouts.length) return;
+
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const laneOffsets = isMobile ? [-34, -18, -34, -18] : [-210, -150, -210, -150];
+    const laneSides = ["left", "left", "right", "right"];
+    const baseTop = isMobile ? -14 : -44;
+    const stepY = isMobile ? 52 : 84;
+    const baseWidth = isMobile ? 34 : 76;
+    const maxTop = Math.max(900, container.scrollHeight - (isMobile ? 100 : 140));
+
+    cutouts.forEach(function (img, index) {
+      const laneIndex = index % laneOffsets.length;
+      const row = Math.floor(index / laneOffsets.length);
+      const jitter = ((index % 3) - 1) * (isMobile ? 5 : 9);
+      let top = baseTop + row * stepY + jitter;
+      if (top > maxTop) {
+        top = baseTop + (index % 18) * (isMobile ? 44 : 66);
+      }
+
+      const width = baseWidth + ((index % 5) - 2) * (isMobile ? 2 : 4);
+      const rotation = (laneSides[laneIndex] === "left" ? -1 : 1) * (4 + (index % 4) * 2);
+
+      img.style.top = Math.round(top) + "px";
+      img.style.width = Math.max(26, width) + "px";
+      img.style.left = "";
+      img.style.right = "";
+      img.style.transform = "rotate(" + rotation + "deg)";
+      img.style.zIndex = String(110 + (index % 6));
+
+      if (laneSides[laneIndex] === "left") {
+        img.style.left = laneOffsets[laneIndex] + "px";
+      } else {
+        img.style.right = laneOffsets[laneIndex] + "px";
+      }
+
+      // Keep top-right area cleaner for the fixed music player.
+      if (!isMobile && laneSides[laneIndex] === "right" && top < 130) {
+        img.style.top = Math.round(top + 130) + "px";
+      }
+    });
+  }
+
+  function setupCutouts() {
     const container = document.querySelector("main.content-wrap");
+    if (!container) return;
 
-    if (!shouldShow || !container) {
-      if (cutoutLayer.parentNode) {
-        cutoutLayer.parentNode.removeChild(cutoutLayer);
-      }
-      return;
-    }
+    const layer = document.createElement("div");
+    layer.className = "artist-cutout-layer";
 
-    if (cutoutLayer.parentNode !== container) {
-      container.appendChild(cutoutLayer);
-    }
-    layoutExtraCutouts();
+    CUTOUT_SOURCES.forEach(function (src, index) {
+      const img = createCutoutImage(src, index);
+      img.addEventListener("load", function () {
+        layoutCutouts(layer, container);
+      });
+      layer.appendChild(img);
+    });
+
+    container.appendChild(layer);
+    layoutCutouts(layer, container);
+
+    window.addEventListener("resize", function () {
+      layoutCutouts(layer, container);
+    });
   }
 
-  window.addEventListener("resize", layoutExtraCutouts);
-
-  document.body.appendChild(cutout49);
-  document.body.appendChild(ui);
-  placeCutoutOnPage();
-  updateUI();
-
-  if (state.playing) {
-    tryPlay();
-  }
+  setupPlayer();
+  setupCutouts();
 })();
