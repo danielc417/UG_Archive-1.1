@@ -293,6 +293,12 @@
       ui.style.setProperty("margin", "0", "important");
     }
 
+    let lockRafId = 0;
+    function tickPlayerLock() {
+      lockPlayerPosition();
+      lockRafId = window.requestAnimationFrame(tickPlayerLock);
+    }
+
     window.addEventListener("pagehide", persistBeforeLeave);
     window.addEventListener("beforeunload", persistBeforeLeave);
     document.body.appendChild(ui);
@@ -304,6 +310,14 @@
       window.visualViewport.addEventListener("resize", lockPlayerPosition, { passive: true });
       window.visualViewport.addEventListener("scroll", lockPlayerPosition, { passive: true });
     }
+    lockRafId = window.requestAnimationFrame(tickPlayerLock);
+    window.addEventListener(
+      "pagehide",
+      function () {
+        if (lockRafId) window.cancelAnimationFrame(lockRafId);
+      },
+      { once: true }
+    );
     updateUI();
 
     if (state.playing) {
