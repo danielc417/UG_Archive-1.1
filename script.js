@@ -52,9 +52,31 @@
   };
   const THEME_ORDER = ["midnight", "rose"];
   const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
+  const TABLET_BREAKPOINT_QUERY = "(max-width: 1024px)";
+  const COMPACT_BREAKPOINT_QUERY = "(max-width: 1366px)";
+  const TOUCH_POINTER_QUERY = "(pointer: coarse)";
   const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const LOW_POWER_MODE = window.matchMedia(REDUCED_MOTION_QUERY).matches || !!(connection && connection.saveData) || window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+  const hardwareThreads = navigator.hardwareConcurrency || 0;
+  const deviceMemory = navigator.deviceMemory || 0;
+  const userAgent = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+  const isAppleTouchDevice =
+    /iP(hone|od|ad)/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isIOSSafari =
+    isAppleTouchDevice && /WebKit/i.test(userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|GSA/i.test(userAgent);
+  const isIPhoneSafari = isIOSSafari && /iPhone/i.test(userAgent);
+  let lowPowerMode = false;
+
+  function shouldUseLowPowerMode() {
+    const prefersReducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
+    const mobileViewport = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+    const touchTabletViewport =
+      window.matchMedia(TABLET_BREAKPOINT_QUERY).matches && window.matchMedia(TOUCH_POINTER_QUERY).matches;
+    const weakHardware = (deviceMemory > 0 && deviceMemory <= 4) || (hardwareThreads > 0 && hardwareThreads <= 4);
+    const constrainedDesktop = weakHardware && window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
+    return prefersReducedMotion || !!(connection && connection.saveData) || mobileViewport || touchTabletViewport || constrainedDesktop;
+  }
   const CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
     "assets/images/cutout-01.png",
@@ -211,9 +233,46 @@
     if (body) body.setAttribute("data-theme", themeName);
   }
 
+  function syncViewportHeightVar() {
+    const root = document.documentElement;
+    if (!root) return;
+    root.style.setProperty("--app-vh", window.innerHeight * 0.01 + "px");
+  }
+
+  function applyIOSVideoHints(video) {
+    if (!video || !isIOSSafari) return;
+    video.playsInline = true;
+    video.muted = true;
+    video.setAttribute("playsinline", "");
+    video.setAttribute("webkit-playsinline", "");
+    video.setAttribute("muted", "");
+    video.setAttribute("disablepictureinpicture", "");
+    video.setAttribute("disableremoteplayback", "");
+    if (isIPhoneSafari) {
+      video.preload = "metadata";
+    }
+    if ("disablePictureInPicture" in video) {
+      video.disablePictureInPicture = true;
+    }
+    if ("disableRemotePlayback" in video) {
+      video.disableRemotePlayback = true;
+    }
+  }
+
   function applyPerformanceProfile() {
     if (!document.body) return;
-    document.body.classList.toggle("low-power", LOW_POWER_MODE);
+    lowPowerMode = shouldUseLowPowerMode();
+    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+    const isTablet = !isMobile && window.matchMedia(TABLET_BREAKPOINT_QUERY).matches;
+    const isCompact = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
+    const isTouch = window.matchMedia(TOUCH_POINTER_QUERY).matches;
+    document.body.classList.toggle("low-power", lowPowerMode);
+    document.body.classList.toggle("mobile-layout", isMobile);
+    document.body.classList.toggle("tablet-layout", isTablet);
+    document.body.classList.toggle("compact-layout", isCompact);
+    document.body.classList.toggle("touch-device", isTouch);
+    document.body.classList.toggle("ios-safari", isIOSSafari);
+    document.body.classList.toggle("iphone-safari", isIPhoneSafari);
   }
 
   function setupThemeSwitcher() {
@@ -410,7 +469,7 @@
   function createCutoutImage(src, index) {
     const img = document.createElement("img");
     img.className = "artist-cutout";
-    if (LOW_POWER_MODE || index % 2 === 0) {
+    if (lowPowerMode || index % 2 === 0) {
       img.classList.add("no-sway");
     }
     img.src = src;
@@ -435,7 +494,8 @@
     let cutout3Target = null;
     let cutout48Target = null;
 
-    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+    const isCompact = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
     const content = document.querySelector("main.content-wrap");
     const contentRect = content ? content.getBoundingClientRect() : null;
     const containerRect = container.getBoundingClientRect();
@@ -443,24 +503,34 @@
     const containerHeight = Math.max(container.scrollHeight, window.innerHeight + 240);
     const baseTop = isMobile ? 12 : 24;
     const maxTop = containerHeight - (isMobile ? 100 : 140);
-    const baseWidth = isMobile ? 47 : 105;
-    const minGap = isMobile ? 22 : 26;
-    const laneCount = isMobile ? 6 : 8;
 
     let safeLeft = Math.round(containerWidth * 0.23);
     let safeRight = Math.round(containerWidth * 0.77);
+    const contentInset = isMobile ? 8 : 14;
     if (contentRect) {
-      safeLeft = Math.max(0, Math.round(contentRect.left - containerRect.left - 16));
-      safeRight = Math.min(containerWidth, Math.round(contentRect.right - containerRect.left + 16));
+      safeLeft = Math.max(0, Math.round(contentRect.left - containerRect.left - contentInset));
+      safeRight = Math.min(containerWidth, Math.round(contentRect.right - containerRect.left + contentInset));
+    }
+    const leftBoundary = Math.max(0, Math.round(safeLeft - 4));
+    const rightBoundary = Math.min(containerWidth, Math.round(safeRight + 4));
+    const leftGutterWidth = Math.max(0, leftBoundary);
+    const rightGutterWidth = Math.max(0, containerWidth - rightBoundary);
+    const narrowGutters = !isMobile && isCompact && Math.min(leftGutterWidth, rightGutterWidth) < 150;
+    const baseWidth = isMobile ? 44 : narrowGutters ? 68 : 105;
+    const minGap = isMobile ? 22 : narrowGutters ? 20 : 26;
+    const laneCount = isMobile ? 6 : narrowGutters ? 4 : 8;
+
+    function clamp(value, min, max) {
+      return Math.min(Math.max(value, min), max);
     }
 
     const leftLanes = [];
     const rightLanes = [];
     const leftCount = Math.floor(laneCount / 2);
     const rightCount = laneCount - leftCount;
-    const leftWidth = Math.max(40, safeLeft - 14);
-    const rightStart = Math.min(containerWidth - 40, safeRight + 14);
-    const rightWidth = Math.max(40, containerWidth - rightStart - 14);
+    const leftWidth = Math.max(34, leftBoundary - 8);
+    const rightStart = Math.min(containerWidth - 34, rightBoundary + 8);
+    const rightWidth = Math.max(34, containerWidth - rightStart - 8);
 
     for (let i = 0; i < leftCount; i += 1) {
       leftLanes.push({
@@ -481,12 +551,15 @@
 
     cutouts.forEach(function (img, index) {
       const width = baseWidth + ((index % 5) - 2) * (isMobile ? 2 : 4);
-      const safeWidth = Math.max(26, width);
-      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
-      const estHeight = safeWidth * Math.max(0.9, Math.min(2.5, ratio));
       const lane = isMobile ? lanes[index % lanes.length] : lanes.reduce(function (best, current) {
         return current.nextTop < best.nextTop ? current : best;
       }, lanes[0]);
+      const maxWidthForSide = lane.side === "left"
+        ? Math.max(24, leftBoundary - 8)
+        : Math.max(24, containerWidth - rightBoundary - 8);
+      const safeWidth = Math.max(24, Math.min(width, maxWidthForSide));
+      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
+      const estHeight = safeWidth * Math.max(0.9, Math.min(2.5, ratio));
 
       let top = lane.nextTop;
       if (top > maxTop) {
@@ -506,11 +579,14 @@
       img.style.zIndex = String(110 + (index % 6));
 
       if (lane.side === "left") {
-        const left = Math.max(6, lane.xBase + jitterX - safeWidth / 2);
-        img.style.left = Math.round(left) + "px";
+        const preferredLeft = lane.xBase + jitterX - safeWidth / 2;
+        const maxLeft = Math.max(0, leftBoundary - safeWidth - 4);
+        img.style.left = Math.round(clamp(preferredLeft, 0, maxLeft)) + "px";
       } else {
-        const left = Math.min(containerWidth - safeWidth - 6, lane.xBase + jitterX - safeWidth / 2);
-        img.style.left = Math.round(left) + "px";
+        const preferredLeft = lane.xBase + jitterX - safeWidth / 2;
+        const minLeft = Math.min(containerWidth - safeWidth, rightBoundary + 4);
+        const maxLeft = Math.max(minLeft, containerWidth - safeWidth - 4);
+        img.style.left = Math.round(clamp(preferredLeft, minLeft, maxLeft)) + "px";
       }
 
       if (img.src.indexOf("cutout-01.png") !== -1) {
@@ -681,6 +757,60 @@
         };
       }
 
+      const finalWidth = parseFloat(img.style.width) || safeWidth;
+      const finalTop = parseFloat(img.style.top) || 0;
+      const currentLeft = parseFloat(img.style.left) || 0;
+      if (lane.side === "left") {
+        const maxLeft = Math.max(0, leftBoundary - finalWidth - 2);
+        img.style.left = Math.round(clamp(currentLeft, 0, maxLeft)) + "px";
+      } else {
+        const minLeft = Math.min(containerWidth - finalWidth, rightBoundary + 2);
+        const maxLeft = Math.max(minLeft, containerWidth - finalWidth - 2);
+        img.style.left = Math.round(clamp(currentLeft, minLeft, maxLeft)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-03.png") !== -1) {
+        cutout3Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: finalTop,
+          width: finalWidth
+        };
+      }
+
+      if (img.src.indexOf("cutout-48.png") !== -1) {
+        cutout48Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: finalTop
+        };
+      }
+
+      if (img.src.indexOf("cutout-07.png") !== -1) {
+        cutout7Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: finalTop,
+          width: finalWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
+      if (img.src.indexOf("cutout-59.png") !== -1) {
+        cutout59Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: finalTop,
+          width: finalWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
+      if (img.src.indexOf("cutout-64.png") !== -1) {
+        cutout64Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: finalTop,
+          width: finalWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
       lane.nextTop = top + estHeight + minGap;
     });
 
@@ -789,9 +919,14 @@
     const layer = document.createElement("div");
     layer.className = "artist-cutout-layer";
 
-    const activeSources = LOW_POWER_MODE ? CUTOUT_SOURCES.filter(function (_src, index) {
-      return index === 0 || index % 2 === 1;
-    }).slice(0, 34) : CUTOUT_SOURCES;
+    const compactViewport = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
+    const shouldTrim = lowPowerMode || compactViewport;
+    const maxCutouts = lowPowerMode ? 18 : 28;
+    const activeSources = shouldTrim
+      ? CUTOUT_SOURCES.filter(function (_src, index) {
+          return index === 0 || index % 2 === 1;
+        }).slice(0, maxCutouts)
+      : CUTOUT_SOURCES;
 
     let layoutRaf = 0;
     function scheduleLayout() {
@@ -820,6 +955,7 @@
     const START_OFFSET = 0.08;
     const videos = Array.from(document.querySelectorAll(".osama-cutout, .nine-cutout"));
     videos.forEach(function (video) {
+      applyIOSVideoHints(video);
       function skipJitterFrames() {
         if (!Number.isFinite(video.duration) || video.duration <= START_OFFSET + 0.05) return;
         if (video.currentTime < START_OFFSET) {
@@ -853,6 +989,7 @@
     if (!videos.length) return;
 
     const visibleState = new WeakMap();
+    const keepSingleVideo = isIPhoneSafari;
 
     function syncPlayback(video) {
       const isVisible = visibleState.get(video) !== false;
@@ -884,6 +1021,13 @@
     }
 
     videos.forEach(function (video) {
+      applyIOSVideoHints(video);
+      if (keepSingleVideo && video.classList.contains("bg-video-right")) {
+        visibleState.set(video, false);
+        video.pause();
+        video.style.display = "none";
+        return;
+      }
       visibleState.set(video, true);
       video.addEventListener("loadedmetadata", function () {
         if (Number.isFinite(video.duration) && video.duration > 0.08 && video.currentTime < 0.04) {
@@ -909,6 +1053,11 @@
   function setupBouncingBgVideo() {
     const dvdVideo = document.querySelector(".bg-video-left");
     if (!dvdVideo) return;
+    if (lowPowerMode) {
+      dvdVideo.style.transform = "";
+      dvdVideo.style.willChange = "auto";
+      return;
+    }
     const pageScroll = document.querySelector(".page-scroll");
 
     let x = 0;
@@ -918,7 +1067,7 @@
     const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
     let vx = isMobile ? 3.1 : 4.2;
     let vy = isMobile ? 2.5 : 3.4;
-    const frameMs = LOW_POWER_MODE ? 1000 / 24 : 1000 / 30;
+    const frameMs = lowPowerMode ? 1000 / 24 : 1000 / 30;
     let maxX = 0;
     let maxY = 0;
     let accumulator = 0;
@@ -1032,6 +1181,11 @@
   function setupBouncingLeaf() {
     const leafWrap = document.querySelector(".bg-leaf-left-wrap");
     if (!leafWrap) return;
+    if (lowPowerMode) {
+      leafWrap.style.transform = "";
+      leafWrap.style.willChange = "auto";
+      return;
+    }
 
     const pageScroll = document.querySelector(".page-scroll");
     const content = document.querySelector("main.content-wrap");
@@ -1042,7 +1196,7 @@
     const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
     let vx = isMobile ? 1 : 1.3;
     let vy = isMobile ? 0.8 : 1.05;
-    const frameMs = LOW_POWER_MODE ? 1000 / 20 : 1000 / 28;
+    const frameMs = lowPowerMode ? 1000 / 20 : 1000 / 28;
     let maxX = 0;
     let maxY = 0;
     let accumulator = 0;
@@ -1152,6 +1306,12 @@
   }
 
   applyPerformanceProfile();
+  syncViewportHeightVar();
+  window.addEventListener("resize", applyPerformanceProfile);
+  window.addEventListener("orientationchange", applyPerformanceProfile);
+  window.addEventListener("resize", syncViewportHeightVar);
+  window.addEventListener("orientationchange", syncViewportHeightVar);
+  window.addEventListener("pageshow", syncViewportHeightVar);
   setupBouncingBgVideo();
   setupBouncingLeaf();
   setupBackgroundVideos();
