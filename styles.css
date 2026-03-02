@@ -843,6 +843,23 @@ p {
     animation-duration: 112s, 8.8s;
   }
 
+  .theme-fog {
+    filter: blur(10px);
+  }
+
+  .theme-fog::before {
+    filter: blur(12px);
+  }
+
+  .theme-fog::after {
+    filter: blur(14px);
+  }
+
+  .theme-dots::before,
+  .theme-dots::after {
+    opacity: 0.78;
+  }
+
   body {
     line-height: 1.45;
     padding-bottom: 7rem;
@@ -860,7 +877,7 @@ p {
   }
 
   h1 {
-    font-size: clamp(1.2rem, 6.2vw, 1.68rem);
+    font-size: clamp(1.02rem, 5.2vw, 1.42rem);
     margin-bottom: 0.35rem;
   }
 
@@ -871,8 +888,8 @@ p {
 
   .lead {
     width: 100%;
-    font-size: 0.82rem;
-    line-height: 1.35;
+    font-size: 0.74rem;
+    line-height: 1.28;
   }
 
   .manifesto {
@@ -883,8 +900,8 @@ p {
 
   .manifesto p {
     margin: 0.42rem 0;
-    font-size: 0.88rem;
-    line-height: 1.36;
+    font-size: 0.8rem;
+    line-height: 1.28;
   }
 
   .artist-cutout {
@@ -960,6 +977,33 @@ p {
 
 body {
   background: var(--theme-bg);
+}
+
+body.low-power .theme-fog {
+  display: none;
+}
+
+body.low-power .theme-dots::before,
+body.low-power .theme-dots::after {
+  filter: none;
+  opacity: 0.62;
+}
+
+body.low-power .theme-dots {
+  animation-duration: 26s;
+}
+
+body.low-power .bg-video-left,
+body.low-power .bg-video-right {
+  filter: saturate(1.18) brightness(1.02) contrast(1.06);
+}
+
+body.low-power .bg-video-right {
+  animation-duration: 180s, 16s;
+}
+
+body.low-power .bg-leaf-left-wrap {
+  filter: saturate(1.02) brightness(1.01);
 }
 
 h1,

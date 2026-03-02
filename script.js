@@ -51,6 +51,10 @@
     }
   };
   const THEME_ORDER = ["midnight", "rose"];
+  const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
+  const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const LOW_POWER_MODE = window.matchMedia(REDUCED_MOTION_QUERY).matches || !!(connection && connection.saveData) || window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
   const CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
     "assets/images/cutout-01.png",
@@ -205,6 +209,11 @@
     root.style.setProperty("--theme-heading-glow-soft", theme.headingGlowSoft);
     root.style.setProperty("--theme-heading-glow-strong", theme.headingGlowStrong);
     if (body) body.setAttribute("data-theme", themeName);
+  }
+
+  function applyPerformanceProfile() {
+    if (!document.body) return;
+    document.body.classList.toggle("low-power", LOW_POWER_MODE);
   }
 
   function setupThemeSwitcher() {
@@ -401,7 +410,7 @@
   function createCutoutImage(src, index) {
     const img = document.createElement("img");
     img.className = "artist-cutout";
-    if (index % 2 === 0) {
+    if (LOW_POWER_MODE || index % 2 === 0) {
       img.classList.add("no-sway");
     }
     img.src = src;
@@ -435,8 +444,8 @@
     const baseTop = isMobile ? 12 : 24;
     const maxTop = containerHeight - (isMobile ? 100 : 140);
     const baseWidth = isMobile ? 47 : 105;
-    const minGap = isMobile ? 18 : 26;
-    const laneCount = isMobile ? 4 : 8;
+    const minGap = isMobile ? 22 : 26;
+    const laneCount = isMobile ? 6 : 8;
 
     let safeLeft = Math.round(containerWidth * 0.23);
     let safeRight = Math.round(containerWidth * 0.77);
@@ -475,7 +484,7 @@
       const safeWidth = Math.max(26, width);
       const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
       const estHeight = safeWidth * Math.max(0.9, Math.min(2.5, ratio));
-      const lane = lanes.reduce(function (best, current) {
+      const lane = isMobile ? lanes[index % lanes.length] : lanes.reduce(function (best, current) {
         return current.nextTop < best.nextTop ? current : best;
       }, lanes[0]);
 
@@ -780,19 +789,30 @@
     const layer = document.createElement("div");
     layer.className = "artist-cutout-layer";
 
-    CUTOUT_SOURCES.forEach(function (src, index) {
-      const img = createCutoutImage(src, index);
-      img.addEventListener("load", function () {
+    const activeSources = LOW_POWER_MODE ? CUTOUT_SOURCES.filter(function (_src, index) {
+      return index === 0 || index % 2 === 1;
+    }).slice(0, 34) : CUTOUT_SOURCES;
+
+    let layoutRaf = 0;
+    function scheduleLayout() {
+      if (layoutRaf) return;
+      layoutRaf = window.requestAnimationFrame(function () {
+        layoutRaf = 0;
         layoutCutouts(layer, container);
       });
+    }
+
+    activeSources.forEach(function (src, index) {
+      const img = createCutoutImage(src, index);
+      img.addEventListener("load", scheduleLayout);
       layer.appendChild(img);
     });
 
     container.appendChild(layer);
-    layoutCutouts(layer, container);
+    scheduleLayout();
 
     window.addEventListener("resize", function () {
-      layoutCutouts(layer, container);
+      scheduleLayout();
     });
   }
 
@@ -828,6 +848,64 @@
     });
   }
 
+  function setupBackgroundVideos() {
+    const videos = Array.from(document.querySelectorAll(".bg-video-left, .bg-video-right"));
+    if (!videos.length) return;
+
+    const visibleState = new WeakMap();
+
+    function syncPlayback(video) {
+      const isVisible = visibleState.get(video) !== false;
+      const shouldPlay = !document.hidden && isVisible;
+      if (!shouldPlay) {
+        video.pause();
+        return;
+      }
+
+      const playAttempt = video.play();
+      if (playAttempt && typeof playAttempt.catch === "function") {
+        playAttempt.catch(function () {
+          // Ignore autoplay restrictions on background ambience videos.
+        });
+      }
+    }
+
+    let observer = null;
+    if ("IntersectionObserver" in window) {
+      observer = new IntersectionObserver(
+        function (entries) {
+          entries.forEach(function (entry) {
+            visibleState.set(entry.target, entry.isIntersecting && entry.intersectionRatio > 0.01);
+            syncPlayback(entry.target);
+          });
+        },
+        { threshold: [0, 0.01, 0.1] }
+      );
+    }
+
+    videos.forEach(function (video) {
+      visibleState.set(video, true);
+      video.addEventListener("loadedmetadata", function () {
+        if (Number.isFinite(video.duration) && video.duration > 0.08 && video.currentTime < 0.04) {
+          try {
+            video.currentTime = 0.04;
+          } catch (_err) {
+            // Ignore seek failures before the stream is fully seekable.
+          }
+        }
+      });
+      video.addEventListener("canplay", function () {
+        syncPlayback(video);
+      });
+      if (observer) observer.observe(video);
+      syncPlayback(video);
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      videos.forEach(syncPlayback);
+    });
+  }
+
   function setupBouncingBgVideo() {
     const dvdVideo = document.querySelector(".bg-video-left");
     if (!dvdVideo) return;
@@ -837,25 +915,26 @@
     let y = 0;
     let rafId = 0;
     const margin = 10;
-    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
     let vx = isMobile ? 3.1 : 4.2;
     let vy = isMobile ? 2.5 : 3.4;
+    const frameMs = LOW_POWER_MODE ? 1000 / 24 : 1000 / 30;
+    let maxX = 0;
+    let maxY = 0;
+    let accumulator = 0;
+    let lastTick = 0;
+    let lastBoundsRefresh = 0;
 
-    function bounds() {
-      const rect = dvdVideo.getBoundingClientRect();
+    function refreshBounds() {
+      const width = dvdVideo.offsetWidth || dvdVideo.getBoundingClientRect().width || 1;
+      const height = dvdVideo.offsetHeight || dvdVideo.getBoundingClientRect().height || 1;
       const pageHeight = Math.max(
         pageScroll ? pageScroll.scrollHeight : 0,
         document.body ? document.body.scrollHeight : 0,
         document.documentElement ? document.documentElement.scrollHeight : 0
       );
-      return {
-        maxX: Math.max(0, window.innerWidth - rect.width - margin * 2),
-        maxY: Math.max(0, pageHeight - rect.height - margin * 2)
-      };
-    }
-
-    function clampWithinBounds() {
-      const { maxX, maxY } = bounds();
+      maxX = Math.max(0, window.innerWidth - width - margin * 2);
+      maxY = Math.max(0, pageHeight - height - margin * 2);
       x = Math.min(Math.max(0, x), maxX);
       y = Math.min(Math.max(0, y), maxY);
     }
@@ -865,9 +944,7 @@
         "translate3d(" + Math.round(x + margin) + "px, " + Math.round(y + margin) + "px, 0)";
     }
 
-    function tick() {
-      const { maxX, maxY } = bounds();
-
+    function step() {
       x += vx;
       y += vy;
 
@@ -886,6 +963,23 @@
         y = maxY;
         vy = -Math.abs(vy);
       }
+    }
+
+    function tick(now) {
+      if (!lastTick) lastTick = now;
+      const delta = Math.min(64, now - lastTick);
+      lastTick = now;
+      accumulator += delta;
+
+      if (now - lastBoundsRefresh > 1000) {
+        refreshBounds();
+        lastBoundsRefresh = now;
+      }
+
+      while (accumulator >= frameMs) {
+        step();
+        accumulator -= frameMs;
+      }
 
       place();
       rafId = window.requestAnimationFrame(tick);
@@ -893,13 +987,15 @@
 
     function start() {
       if (rafId) return;
-      const { maxX, maxY } = bounds();
+      refreshBounds();
       if (x === 0 && y === 0) {
         x = Math.round(maxX * 0.12);
         y = Math.round(maxY * 0.28);
       }
-      clampWithinBounds();
       place();
+      accumulator = 0;
+      lastTick = 0;
+      lastBoundsRefresh = performance.now();
       rafId = window.requestAnimationFrame(tick);
     }
 
@@ -910,7 +1006,7 @@
     }
 
     window.addEventListener("resize", function () {
-      clampWithinBounds();
+      refreshBounds();
       place();
     });
 
@@ -922,7 +1018,14 @@
       }
     });
 
-    dvdVideo.addEventListener("loadedmetadata", start, { once: true });
+    dvdVideo.addEventListener(
+      "loadedmetadata",
+      function () {
+        refreshBounds();
+        start();
+      },
+      { once: true }
+    );
     start();
   }
 
@@ -936,12 +1039,19 @@
     let y = 0;
     let rafId = 0;
     const margin = 8;
-    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
     let vx = isMobile ? 1 : 1.3;
     let vy = isMobile ? 0.8 : 1.05;
+    const frameMs = LOW_POWER_MODE ? 1000 / 20 : 1000 / 28;
+    let maxX = 0;
+    let maxY = 0;
+    let accumulator = 0;
+    let lastTick = 0;
+    let lastBoundsRefresh = 0;
 
-    function bounds() {
-      const rect = leafWrap.getBoundingClientRect();
+    function refreshBounds() {
+      const width = leafWrap.offsetWidth || leafWrap.getBoundingClientRect().width || 1;
+      const height = leafWrap.offsetHeight || leafWrap.getBoundingClientRect().height || 1;
       const pageHeight = Math.max(
         pageScroll ? pageScroll.scrollHeight : 0,
         document.body ? document.body.scrollHeight : 0,
@@ -950,17 +1060,11 @@
 
       const contentRect = content ? content.getBoundingClientRect() : null;
       const leftLaneRightEdge = contentRect ? Math.round(contentRect.left - 24) : Math.round(window.innerWidth * 0.24);
-      const maxXByViewport = Math.max(0, window.innerWidth - rect.width - margin * 2);
-      const maxXByLeftLane = Math.max(0, leftLaneRightEdge - rect.width - margin);
+      const maxXByViewport = Math.max(0, window.innerWidth - width - margin * 2);
+      const maxXByLeftLane = Math.max(0, leftLaneRightEdge - width - margin);
 
-      return {
-        maxX: Math.min(maxXByViewport, maxXByLeftLane),
-        maxY: Math.max(0, pageHeight - rect.height - margin * 2)
-      };
-    }
-
-    function clampWithinBounds() {
-      const { maxX, maxY } = bounds();
+      maxX = Math.min(maxXByViewport, maxXByLeftLane);
+      maxY = Math.max(0, pageHeight - height - margin * 2);
       x = Math.min(Math.max(0, x), maxX);
       y = Math.min(Math.max(0, y), maxY);
     }
@@ -970,9 +1074,7 @@
         "translate3d(" + Math.round(x + margin) + "px, " + Math.round(y + margin) + "px, 0)";
     }
 
-    function tick() {
-      const { maxX, maxY } = bounds();
-
+    function step() {
       x += vx;
       y += vy;
 
@@ -991,6 +1093,23 @@
         y = maxY;
         vy = -Math.abs(vy);
       }
+    }
+
+    function tick(now) {
+      if (!lastTick) lastTick = now;
+      const delta = Math.min(64, now - lastTick);
+      lastTick = now;
+      accumulator += delta;
+
+      if (now - lastBoundsRefresh > 1000) {
+        refreshBounds();
+        lastBoundsRefresh = now;
+      }
+
+      while (accumulator >= frameMs) {
+        step();
+        accumulator -= frameMs;
+      }
 
       place();
       rafId = window.requestAnimationFrame(tick);
@@ -998,13 +1117,15 @@
 
     function start() {
       if (rafId) return;
-      const { maxX, maxY } = bounds();
+      refreshBounds();
       if (x === 0 && y === 0) {
         x = Math.round(maxX * 0.22);
         y = Math.round(maxY * 0.18);
       }
-      clampWithinBounds();
       place();
+      accumulator = 0;
+      lastTick = 0;
+      lastBoundsRefresh = performance.now();
       rafId = window.requestAnimationFrame(tick);
     }
 
@@ -1015,7 +1136,7 @@
     }
 
     window.addEventListener("resize", function () {
-      clampWithinBounds();
+      refreshBounds();
       place();
     });
 
@@ -1030,8 +1151,10 @@
     start();
   }
 
+  applyPerformanceProfile();
   setupBouncingBgVideo();
   setupBouncingLeaf();
+  setupBackgroundVideos();
   setupThemeSwitcher();
   setupPlayer();
   setupCutoutVideos();
