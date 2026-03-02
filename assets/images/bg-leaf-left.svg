@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500" role="img" aria-label="Green leaf background cutout">
+  <ellipse cx="250" cy="432" rx="132" ry="16" fill="#d9d9d9" />
+  <g fill="#3fb34f" stroke="#000" stroke-width="14" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M250 378 C214 326 218 236 250 78 C282 236 286 326 250 378 Z" />
+    <path d="M242 342 C198 300 146 252 96 200 C172 206 226 244 252 320 Z" />
+    <path d="M258 342 C302 300 354 252 404 200 C328 206 274 244 248 320 Z" />
+    <path d="M232 352 C184 336 146 320 110 292 C164 288 210 304 240 336 Z" />
+    <path d="M268 352 C316 336 354 320 390 292 C336 288 290 304 260 336 Z" />
+    <path d="M246 386 C236 412 228 430 214 450 C238 448 254 430 260 390 Z" />
+  </g>
+</svg>

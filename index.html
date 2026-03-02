@@ -12,11 +12,29 @@
         window.location.replace(path + "/" + window.location.search + window.location.hash);
       })();
     </script>
-    <link rel="stylesheet" href="styles.css?v=147" />
+    <link rel="stylesheet" href="styles.css?v=284" />
   </head>
   <body>
+    <video class="bg-video bg-video-left" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+      <source src="assets/video/osamason-visual.mov" type="video/quicktime" />
+    </video>
+    <div class="bg-leaf-left-wrap" aria-hidden="true">
+      <img class="bg-leaf-left" src="assets/images/bg-leaf-left.svg" alt="" />
+    </div>
+    <video class="bg-video bg-video-right" autoplay muted loop playsinline preload="auto" aria-hidden="true">
+      <source src="assets/video/mickey-and-minnie-bg.mov" type="video/quicktime" />
+    </video>
+    <div class="theme-fog" aria-hidden="true"></div>
+    <div class="theme-dots" aria-hidden="true"></div>
     <div class="page-scroll">
       <header class="site-header">
+        <button
+          id="theme-dot"
+          class="theme-dot"
+          type="button"
+          aria-label="Change theme"
+          title="Change theme"
+        ></button>
         <h1>Underground Music Archives and Evolution</h1>
         <p class="lead">
           This era of underground rap is not one lane. It is a network of scenes, sounds, producers, and internet-born
@@ -96,11 +114,14 @@
     </div>
 
     <video class="osama-cutout" autoplay muted loop playsinline preload="auto" aria-label="Bottom left video">
-      <source src="assets/video/wwif-osamason-trans.mov" type="video/quicktime" />
+      <source src="assets/video/transparent-c.mov" type="video/quicktime" />
+    </video>
+    <video class="nine-cutout" autoplay muted loop playsinline preload="auto" aria-label="Bottom right video">
+      <source src="assets/video/nine-studio-addict-transparent.mov" type="video/quicktime" />
     </video>
 
     <div id="overlay-root" class="overlay-root"></div>
 
-    <script src="script.js?v=147"></script>
+    <script src="script.js?v=284"></script>
   </body>
 </html>

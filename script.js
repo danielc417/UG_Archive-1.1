@@ -17,10 +17,40 @@
       artist: "Nettspend",
       src: "assets/audio/project-pat-nettspend.mp3",
       cover: "assets/images/player-spin-projectpat.jpg"
+    },
+    {
+      title: "BA$$",
+      artist: "Che",
+      src: "assets/audio/che-bass.mp3",
+      cover: "assets/images/player-spin-che-bass.webp"
     }
   ];
 
   const STORAGE_KEY = "underground-mp3-player";
+  const THEME_STORAGE_KEY = "underground-theme";
+  const THEMES = {
+    rose: {
+      bg: "#875987",
+      heading: "#ffc6ef",
+      headerGlass: "rgba(255, 255, 255, 0.14)",
+      cardGlass: "rgba(255, 255, 255, 0.12)",
+      panelBorder: "rgba(255, 255, 255, 0.52)",
+      panelGlow: "rgba(255, 255, 255, 0.48)",
+      headingGlowSoft: "rgba(255, 176, 236, 0.48)",
+      headingGlowStrong: "rgba(255, 136, 224, 0.36)"
+    },
+    midnight: {
+      bg: "radial-gradient(circle at 18% 20%, #17002d 0, transparent 44%), radial-gradient(circle at 86% 18%, #070b2b 0, transparent 42%), #04050a",
+      heading: "#9d00ff",
+      headerGlass: "rgba(0, 0, 0, 0.88)",
+      cardGlass: "rgba(0, 0, 0, 0.88)",
+      panelBorder: "rgba(157, 0, 255, 0.95)",
+      panelGlow: "rgba(157, 0, 255, 0.62)",
+      headingGlowSoft: "rgba(157, 0, 255, 0.58)",
+      headingGlowStrong: "rgba(157, 0, 255, 0.4)"
+    }
+  };
+  const THEME_ORDER = ["midnight", "rose"];
   const CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
     "assets/images/cutout-01.png",
@@ -70,15 +100,38 @@
     "assets/images/cutout-45.png",
     "assets/images/cutout-46.png",
     "assets/images/cutout-47.png",
-    "assets/images/cutout-48.png"
+    "assets/images/cutout-48.png",
+    "assets/images/cutout-49.png",
+    "assets/images/cutout-50.png",
+    "assets/images/cutout-51.png",
+    "assets/images/cutout-52.png",
+    "assets/images/cutout-53.png",
+    "assets/images/cutout-54.png",
+    "assets/images/cutout-55.png",
+    "assets/images/cutout-56.png",
+    "assets/images/cutout-57.png",
+    "assets/images/cutout-58.png",
+    "assets/images/cutout-59.png",
+    "assets/images/cutout-60.png",
+    "assets/images/cutout-61.png",
+    "assets/images/cutout-62.png",
+    "assets/images/cutout-63.png",
+    "assets/images/cutout-64.png",
+    "assets/images/cutout-65.png"
   ];
+  const DEFAULT_TRACK_INDEX = Math.max(
+    0,
+    TRACKS.findIndex(function (track) {
+      return track.title === "BA$$" && track.artist === "Che";
+    })
+  );
 
   const state = {
     playing: false,
     muted: true,
     volume: 0.6,
     currentTime: 0,
-    trackIndex: 0
+    trackIndex: DEFAULT_TRACK_INDEX
   };
 
   let lastSavedSecond = -1;
@@ -137,6 +190,60 @@
     audio.volume = state.volume;
     audio.muted = state.muted;
     return audio;
+  }
+
+  function applyTheme(themeName) {
+    const root = document.documentElement;
+    const body = document.body;
+    const theme = THEMES[themeName] || THEMES.rose;
+    root.style.setProperty("--theme-bg", theme.bg);
+    root.style.setProperty("--theme-heading", theme.heading);
+    root.style.setProperty("--theme-header-glass", theme.headerGlass);
+    root.style.setProperty("--theme-card-glass", theme.cardGlass);
+    root.style.setProperty("--theme-panel-border", theme.panelBorder);
+    root.style.setProperty("--theme-panel-glow", theme.panelGlow);
+    root.style.setProperty("--theme-heading-glow-soft", theme.headingGlowSoft);
+    root.style.setProperty("--theme-heading-glow-strong", theme.headingGlowStrong);
+    if (body) body.setAttribute("data-theme", themeName);
+  }
+
+  function setupThemeSwitcher() {
+    const dot = document.getElementById("theme-dot");
+    let currentTheme = "midnight";
+
+    try {
+      const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+      if (savedTheme && THEMES[savedTheme]) {
+        currentTheme = savedTheme;
+      }
+    } catch (_err) {
+      // Ignore unavailable storage.
+    }
+
+    applyTheme(currentTheme);
+    if (!dot) return;
+
+    function paintDot(themeName) {
+      const theme = THEMES[themeName] || THEMES.rose;
+      dot.style.background = theme.bg;
+      dot.style.borderColor = "rgba(255, 255, 255, 0.9)";
+      dot.style.boxShadow = "0 0 10px rgba(255, 255, 255, 0.55)";
+    }
+
+    paintDot(currentTheme);
+
+    dot.addEventListener("click", function () {
+      const currentIndex = THEME_ORDER.indexOf(currentTheme);
+      const nextIndex = (currentIndex + 1) % THEME_ORDER.length;
+      currentTheme = THEME_ORDER[nextIndex];
+      applyTheme(currentTheme);
+      paintDot(currentTheme);
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, currentTheme);
+      } catch (_err) {
+        // Ignore unavailable storage.
+      }
+    });
   }
 
   function setupPlayer() {
@@ -294,8 +401,14 @@
   function createCutoutImage(src, index) {
     const img = document.createElement("img");
     img.className = "artist-cutout";
+    if (index % 2 === 0) {
+      img.classList.add("no-sway");
+    }
     img.src = src;
     img.alt = "Artist cutout " + (index + 1);
+    const sectionPhase = Math.min(3, Math.floor((index / Math.max(1, CUTOUT_SOURCES.length - 1)) * 4));
+    const appearDelayMs = 700 + sectionPhase * 700 + (index % 4) * 70;
+    img.style.setProperty("--appear-delay", appearDelayMs + "ms");
     return img;
   }
 
@@ -303,7 +416,15 @@
     const cutouts = Array.from(layer.querySelectorAll(".artist-cutout"));
     if (!cutouts.length) return;
     const osamaCutout = document.querySelector(".osama-cutout");
-    let osamaTarget = null;
+    const nineCutout = document.querySelector(".nine-cutout");
+    let cutout56 = null;
+    let cutout59Target = null;
+    let cutout57 = null;
+    let cutout7Target = null;
+    let cutout49 = null;
+    let cutout64Target = null;
+    let cutout3Target = null;
+    let cutout48Target = null;
 
     const isMobile = window.matchMedia("(max-width: 640px)").matches;
     const content = document.querySelector("main.content-wrap");
@@ -385,7 +506,24 @@
 
       if (img.src.indexOf("cutout-01.png") !== -1) {
         const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.left = Math.max(0, Math.round(currentLeft - (isMobile ? 22 : 42))) + "px";
+        img.style.left = Math.round(currentLeft - (isMobile ? 8 : 28)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-50.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft - (isMobile ? 6 : 12)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-55.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-43.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 6 : 10)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
       }
 
       if (img.src.indexOf("cutout-26.png") !== -1) {
@@ -423,7 +561,9 @@
       }
 
       if (img.src.indexOf("cutout-12.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
         const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 16 : 30)) + "px";
         img.style.left = Math.round(currentLeft + (isMobile ? 10 : 20)) + "px";
         img.style.width = Math.round(safeWidth * 1.1) + "px";
       }
@@ -435,6 +575,11 @@
         img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
         const currentRotation = rotation + (isMobile ? 8 : 12);
         img.style.setProperty("--cutout-rot", currentRotation + "deg");
+        cutout3Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth
+        };
       }
 
       if (img.src.indexOf("cutout-05.png") !== -1) {
@@ -455,16 +600,46 @@
         img.style.setProperty("--cutout-rot", currentRotation + "deg");
       }
 
+      if (img.src.indexOf("cutout-48.png") !== -1) {
+        cutout48Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0
+        };
+      }
+
+      if (img.src.indexOf("cutout-49.png") !== -1) {
+        cutout49 = img;
+      }
+
+      if (img.src.indexOf("cutout-57.png") !== -1) {
+        cutout57 = img;
+      }
+
+      if (img.src.indexOf("cutout-56.png") !== -1) {
+        cutout56 = img;
+      }
+
+      if (img.src.indexOf("cutout-64.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 10 : 18)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-64.png") !== -1) {
+        cutout64Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
       if (img.src.indexOf("cutout-05.png") !== -1 || img.src.indexOf("cutout-07.png") !== -1) {
-        const originalLeft = parseFloat(img.style.left) || 0;
-        const originalTop = parseFloat(img.style.top) || 0;
         const finalWidth = parseFloat(img.style.width) || safeWidth;
         const clampedRatio = Math.max(0.9, Math.min(2.5, ratio));
         const finalHeight = finalWidth * clampedRatio;
         let stuckLeft = 0;
         let stuckTop = Math.max(0, Math.round(containerHeight - finalHeight));
         if (img.src.indexOf("cutout-05.png") !== -1) {
-          osamaTarget = { left: originalLeft, top: originalTop };
           const liftAmount = isMobile ? 18 : 36;
           stuckTop = Math.max(0, stuckTop - liftAmount);
         }
@@ -479,19 +654,122 @@
         img.style.top = stuckTop + "px";
       }
 
+      if (img.src.indexOf("cutout-07.png") !== -1) {
+        cutout7Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
+      if (img.src.indexOf("cutout-59.png") !== -1) {
+        cutout59Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
       lane.nextTop = top + estHeight + minGap;
     });
 
-    if (osamaCutout && osamaTarget) {
-      const rightShift = isMobile ? 8 : 24;
-      const downShift = isMobile ? 24 : 52;
-      osamaCutout.style.left = Math.max(0, Math.round(osamaTarget.left + rightShift)) + "px";
-      osamaCutout.style.top = Math.round(osamaTarget.top + downShift) + "px";
+    if (osamaCutout && cutout3Target) {
+      const osamaWidth = osamaCutout.offsetWidth || (isMobile ? 120 : 190);
+      const xOffset = isMobile ? -10 : -28;
+      const yOffset = isMobile ? 56 : 92;
+      const desiredLeft = cutout3Target.left + cutout3Target.width + xOffset;
+      const desiredTop = cutout3Target.top + yOffset;
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - osamaWidth - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(desiredTop));
+
+      osamaCutout.style.left = clampedLeft + "px";
+      osamaCutout.style.top = clampedTop + "px";
       osamaCutout.style.right = "auto";
       osamaCutout.style.bottom = "auto";
       if (typeof osamaCutout.playbackRate === "number") {
-        osamaCutout.playbackRate = 0.65;
+        osamaCutout.playbackRate = 1.12;
       }
+    }
+
+    if (nineCutout && cutout48Target) {
+      const nineWidth = nineCutout.offsetWidth || (isMobile ? 110 : 180);
+      const xGap = isMobile ? 8 : 12;
+      const xRightNudge = isMobile ? 6 : 10;
+      const yOffset = isMobile ? 26 : 44;
+      const desiredLeft = cutout48Target.left - nineWidth - xGap + xRightNudge;
+      const desiredTop = cutout48Target.top + yOffset;
+      const clampedLeft = Math.max(0, Math.round(desiredLeft));
+      const clampedTop = Math.max(0, Math.round(desiredTop));
+
+      nineCutout.style.left = clampedLeft + "px";
+      nineCutout.style.top = clampedTop + "px";
+      nineCutout.style.right = "auto";
+      nineCutout.style.bottom = "auto";
+      nineCutout.style.position = "absolute";
+    }
+
+    if (cutout56 && cutout59Target) {
+      const baseCutout56Width = parseFloat(cutout56.style.width) || (isMobile ? 47 : 105);
+      const cutout56Width = Math.round(baseCutout56Width * 1.1);
+      const xGap = isMobile ? 6 : 12;
+      const xLeftNudge = isMobile ? 11 : 22;
+      const yOffset = isMobile ? 2 : 4;
+      const desiredLeft = cutout59Target.left + cutout59Target.width + xGap - xLeftNudge;
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - cutout56Width - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(cutout59Target.top + yOffset));
+
+      cutout56.style.width = cutout56Width + "px";
+      cutout56.style.left = clampedLeft + "px";
+      cutout56.style.top = clampedTop + "px";
+      cutout56.style.right = "";
+      cutout56.style.zIndex = String(cutout59Target.zIndex + 1);
+    }
+
+    if (cutout57 && cutout7Target) {
+      const cutout57Width = parseFloat(cutout57.style.width) || (isMobile ? 47 : 105);
+      const xGap = isMobile ? 6 : 12;
+      const yOffset = isMobile ? 2 : 4;
+      const desiredLeft = cutout7Target.left + cutout7Target.width + xGap;
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - cutout57Width - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(cutout7Target.top + yOffset));
+
+      cutout57.style.left = clampedLeft + "px";
+      cutout57.style.top = clampedTop + "px";
+      cutout57.style.right = "";
+      cutout57.style.zIndex = String(cutout7Target.zIndex + 1);
+    }
+
+    if (cutout49 && cutout64Target) {
+      const cutout49Width = parseFloat(cutout49.style.width) || (isMobile ? 47 : 105);
+      const xGap = isMobile ? 8 : 14;
+      const yOffset = isMobile ? 10 : 16;
+      let desiredLeft = cutout64Target.left + cutout64Target.width + xGap;
+
+      if (desiredLeft + cutout49Width > containerWidth - 6) {
+        desiredLeft = cutout64Target.left - cutout49Width - xGap;
+      }
+
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - cutout49Width - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(cutout64Target.top + yOffset));
+
+      cutout49.style.left = clampedLeft + "px";
+      cutout49.style.top = clampedTop + "px";
+      cutout49.style.right = "";
+      cutout49.style.zIndex = String(cutout64Target.zIndex + 1);
     }
   }
 
@@ -518,6 +796,244 @@
     });
   }
 
+  function setupCutoutVideos() {
+    const START_OFFSET = 0.08;
+    const videos = Array.from(document.querySelectorAll(".osama-cutout, .nine-cutout"));
+    videos.forEach(function (video) {
+      function skipJitterFrames() {
+        if (!Number.isFinite(video.duration) || video.duration <= START_OFFSET + 0.05) return;
+        if (video.currentTime < START_OFFSET) {
+          try {
+            video.currentTime = START_OFFSET;
+          } catch (_err) {
+            // Ignore seek failures while media is not fully seekable yet.
+          }
+        }
+      }
+
+      video.addEventListener("loadedmetadata", skipJitterFrames, { once: true });
+      video.addEventListener(
+        "canplay",
+        function () {
+          skipJitterFrames();
+          const playAttempt = video.play();
+          if (playAttempt && typeof playAttempt.catch === "function") {
+            playAttempt.catch(function () {
+              // Ignore autoplay restrictions; video remains muted and user can still interact.
+            });
+          }
+        },
+        { once: true }
+      );
+    });
+  }
+
+  function setupBouncingBgVideo() {
+    const dvdVideo = document.querySelector(".bg-video-left");
+    if (!dvdVideo) return;
+    const pageScroll = document.querySelector(".page-scroll");
+
+    let x = 0;
+    let y = 0;
+    let rafId = 0;
+    const margin = 10;
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    let vx = isMobile ? 3.1 : 4.2;
+    let vy = isMobile ? 2.5 : 3.4;
+
+    function bounds() {
+      const rect = dvdVideo.getBoundingClientRect();
+      const pageHeight = Math.max(
+        pageScroll ? pageScroll.scrollHeight : 0,
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0
+      );
+      return {
+        maxX: Math.max(0, window.innerWidth - rect.width - margin * 2),
+        maxY: Math.max(0, pageHeight - rect.height - margin * 2)
+      };
+    }
+
+    function clampWithinBounds() {
+      const { maxX, maxY } = bounds();
+      x = Math.min(Math.max(0, x), maxX);
+      y = Math.min(Math.max(0, y), maxY);
+    }
+
+    function place() {
+      dvdVideo.style.transform =
+        "translate3d(" + Math.round(x + margin) + "px, " + Math.round(y + margin) + "px, 0)";
+    }
+
+    function tick() {
+      const { maxX, maxY } = bounds();
+
+      x += vx;
+      y += vy;
+
+      if (x <= 0) {
+        x = 0;
+        vx = Math.abs(vx);
+      } else if (x >= maxX) {
+        x = maxX;
+        vx = -Math.abs(vx);
+      }
+
+      if (y <= 0) {
+        y = 0;
+        vy = Math.abs(vy);
+      } else if (y >= maxY) {
+        y = maxY;
+        vy = -Math.abs(vy);
+      }
+
+      place();
+      rafId = window.requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (rafId) return;
+      const { maxX, maxY } = bounds();
+      if (x === 0 && y === 0) {
+        x = Math.round(maxX * 0.12);
+        y = Math.round(maxY * 0.28);
+      }
+      clampWithinBounds();
+      place();
+      rafId = window.requestAnimationFrame(tick);
+    }
+
+    function stop() {
+      if (!rafId) return;
+      window.cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+
+    window.addEventListener("resize", function () {
+      clampWithinBounds();
+      place();
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        stop();
+      } else {
+        start();
+      }
+    });
+
+    dvdVideo.addEventListener("loadedmetadata", start, { once: true });
+    start();
+  }
+
+  function setupBouncingLeaf() {
+    const leafWrap = document.querySelector(".bg-leaf-left-wrap");
+    if (!leafWrap) return;
+
+    const pageScroll = document.querySelector(".page-scroll");
+    const content = document.querySelector("main.content-wrap");
+    let x = 0;
+    let y = 0;
+    let rafId = 0;
+    const margin = 8;
+    const isMobile = window.matchMedia("(max-width: 640px)").matches;
+    let vx = isMobile ? 1 : 1.3;
+    let vy = isMobile ? 0.8 : 1.05;
+
+    function bounds() {
+      const rect = leafWrap.getBoundingClientRect();
+      const pageHeight = Math.max(
+        pageScroll ? pageScroll.scrollHeight : 0,
+        document.body ? document.body.scrollHeight : 0,
+        document.documentElement ? document.documentElement.scrollHeight : 0
+      );
+
+      const contentRect = content ? content.getBoundingClientRect() : null;
+      const leftLaneRightEdge = contentRect ? Math.round(contentRect.left - 24) : Math.round(window.innerWidth * 0.24);
+      const maxXByViewport = Math.max(0, window.innerWidth - rect.width - margin * 2);
+      const maxXByLeftLane = Math.max(0, leftLaneRightEdge - rect.width - margin);
+
+      return {
+        maxX: Math.min(maxXByViewport, maxXByLeftLane),
+        maxY: Math.max(0, pageHeight - rect.height - margin * 2)
+      };
+    }
+
+    function clampWithinBounds() {
+      const { maxX, maxY } = bounds();
+      x = Math.min(Math.max(0, x), maxX);
+      y = Math.min(Math.max(0, y), maxY);
+    }
+
+    function place() {
+      leafWrap.style.transform =
+        "translate3d(" + Math.round(x + margin) + "px, " + Math.round(y + margin) + "px, 0)";
+    }
+
+    function tick() {
+      const { maxX, maxY } = bounds();
+
+      x += vx;
+      y += vy;
+
+      if (x <= 0) {
+        x = 0;
+        vx = Math.abs(vx);
+      } else if (x >= maxX) {
+        x = maxX;
+        vx = -Math.abs(vx);
+      }
+
+      if (y <= 0) {
+        y = 0;
+        vy = Math.abs(vy);
+      } else if (y >= maxY) {
+        y = maxY;
+        vy = -Math.abs(vy);
+      }
+
+      place();
+      rafId = window.requestAnimationFrame(tick);
+    }
+
+    function start() {
+      if (rafId) return;
+      const { maxX, maxY } = bounds();
+      if (x === 0 && y === 0) {
+        x = Math.round(maxX * 0.22);
+        y = Math.round(maxY * 0.18);
+      }
+      clampWithinBounds();
+      place();
+      rafId = window.requestAnimationFrame(tick);
+    }
+
+    function stop() {
+      if (!rafId) return;
+      window.cancelAnimationFrame(rafId);
+      rafId = 0;
+    }
+
+    window.addEventListener("resize", function () {
+      clampWithinBounds();
+      place();
+    });
+
+    document.addEventListener("visibilitychange", function () {
+      if (document.hidden) {
+        stop();
+      } else {
+        start();
+      }
+    });
+
+    start();
+  }
+
+  setupBouncingBgVideo();
+  setupBouncingLeaf();
+  setupThemeSwitcher();
   setupPlayer();
+  setupCutoutVideos();
   setupCutouts();
 })();
