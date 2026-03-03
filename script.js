@@ -52,10 +52,13 @@
   };
   const THEME_ORDER = ["midnight", "rose"];
   const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
+  const SMALL_SCREEN_BREAKPOINT_QUERY = "(max-width: 900px)";
   const TABLET_BREAKPOINT_QUERY = "(max-width: 1024px)";
   const COMPACT_BREAKPOINT_QUERY = "(max-width: 1366px)";
   const TOUCH_POINTER_QUERY = "(pointer: coarse)";
   const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
+  const UNIVERSAL_RENDER_MODE = false;
+  const UNIVERSAL_CUTOUT_LIMIT = 28;
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const hardwareThreads = navigator.hardwareConcurrency || 0;
   const deviceMemory = navigator.deviceMemory || 0;
@@ -69,6 +72,7 @@
   let lowPowerMode = false;
 
   function shouldUseLowPowerMode() {
+    if (UNIVERSAL_RENDER_MODE) return false;
     const prefersReducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
     const mobileViewport = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
     const touchTabletViewport =
@@ -76,6 +80,30 @@
     const weakHardware = (deviceMemory > 0 && deviceMemory <= 4) || (hardwareThreads > 0 && hardwareThreads <= 4);
     const constrainedDesktop = weakHardware && window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
     return prefersReducedMotion || !!(connection && connection.saveData) || mobileViewport || touchTabletViewport || constrainedDesktop;
+  }
+
+  function getViewportProfile() {
+    if (UNIVERSAL_RENDER_MODE) {
+      return {
+        isMobile: false,
+        isTablet: false,
+        isCompact: false,
+        isTouch: false,
+        lowPowerMode: false
+      };
+    }
+
+    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+    const isTablet = !isMobile && window.matchMedia(TABLET_BREAKPOINT_QUERY).matches;
+    const isCompact = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
+    const isTouch = window.matchMedia(TOUCH_POINTER_QUERY).matches;
+    return {
+      isMobile: isMobile,
+      isTablet: isTablet,
+      isCompact: isCompact,
+      isTouch: isTouch,
+      lowPowerMode: shouldUseLowPowerMode()
+    };
   }
   const CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
@@ -261,18 +289,16 @@
 
   function applyPerformanceProfile() {
     if (!document.body) return;
-    lowPowerMode = shouldUseLowPowerMode();
-    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
-    const isTablet = !isMobile && window.matchMedia(TABLET_BREAKPOINT_QUERY).matches;
-    const isCompact = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
-    const isTouch = window.matchMedia(TOUCH_POINTER_QUERY).matches;
-    document.body.classList.toggle("low-power", lowPowerMode);
-    document.body.classList.toggle("mobile-layout", isMobile);
-    document.body.classList.toggle("tablet-layout", isTablet);
-    document.body.classList.toggle("compact-layout", isCompact);
-    document.body.classList.toggle("touch-device", isTouch);
-    document.body.classList.toggle("ios-safari", isIOSSafari);
-    document.body.classList.toggle("iphone-safari", isIPhoneSafari);
+    const profile = getViewportProfile();
+    lowPowerMode = profile.lowPowerMode;
+    document.body.classList.toggle("low-power", profile.lowPowerMode);
+    document.body.classList.toggle("mobile-layout", profile.isMobile);
+    document.body.classList.toggle("tablet-layout", profile.isTablet);
+    document.body.classList.toggle("compact-layout", profile.isCompact);
+    document.body.classList.toggle("touch-device", profile.isTouch);
+    document.body.classList.toggle("universal-render", UNIVERSAL_RENDER_MODE);
+    document.body.classList.toggle("ios-safari", UNIVERSAL_RENDER_MODE ? false : isIOSSafari);
+    document.body.classList.toggle("iphone-safari", UNIVERSAL_RENDER_MODE ? false : isIPhoneSafari);
   }
 
   function setupThemeSwitcher() {
@@ -468,7 +494,7 @@
 
   function createCutoutImage(src, index) {
     const img = document.createElement("img");
-    img.className = "artist-cutout";
+    img.className = "artist-cutout cutout";
     if (lowPowerMode || index % 2 === 0) {
       img.classList.add("no-sway");
     }
@@ -480,475 +506,44 @@
     return img;
   }
 
-  function layoutCutouts(layer, container) {
-    const cutouts = Array.from(layer.querySelectorAll(".artist-cutout"));
-    if (!cutouts.length) return;
-    const osamaCutout = document.querySelector(".osama-cutout");
-    const nineCutout = document.querySelector(".nine-cutout");
-    let cutout56 = null;
-    let cutout59Target = null;
-    let cutout57 = null;
-    let cutout7Target = null;
-    let cutout49 = null;
-    let cutout64Target = null;
-    let cutout3Target = null;
-    let cutout48Target = null;
-
-    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
-    const isCompact = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
-    const content = document.querySelector("main.content-wrap");
-    const contentRect = content ? content.getBoundingClientRect() : null;
-    const containerRect = container.getBoundingClientRect();
-    const containerWidth = container.clientWidth;
-    const containerHeight = Math.max(container.scrollHeight, window.innerHeight + 240);
-    const baseTop = isMobile ? 12 : 24;
-    const maxTop = containerHeight - (isMobile ? 100 : 140);
-
-    let safeLeft = Math.round(containerWidth * 0.23);
-    let safeRight = Math.round(containerWidth * 0.77);
-    const contentInset = isMobile ? 8 : 14;
-    if (contentRect) {
-      safeLeft = Math.max(0, Math.round(contentRect.left - containerRect.left - contentInset));
-      safeRight = Math.min(containerWidth, Math.round(contentRect.right - containerRect.left + contentInset));
-    }
-    const leftBoundary = Math.max(0, Math.round(safeLeft - 4));
-    const rightBoundary = Math.min(containerWidth, Math.round(safeRight + 4));
-    const leftGutterWidth = Math.max(0, leftBoundary);
-    const rightGutterWidth = Math.max(0, containerWidth - rightBoundary);
-    const narrowGutters = !isMobile && isCompact && Math.min(leftGutterWidth, rightGutterWidth) < 150;
-    const baseWidth = isMobile ? 44 : narrowGutters ? 68 : 105;
-    const minGap = isMobile ? 22 : narrowGutters ? 20 : 26;
-    const laneCount = isMobile ? 6 : narrowGutters ? 4 : 8;
-
-    function clamp(value, min, max) {
-      return Math.min(Math.max(value, min), max);
-    }
-
-    const leftLanes = [];
-    const rightLanes = [];
-    const leftCount = Math.floor(laneCount / 2);
-    const rightCount = laneCount - leftCount;
-    const leftWidth = Math.max(34, leftBoundary - 8);
-    const rightStart = Math.min(containerWidth - 34, rightBoundary + 8);
-    const rightWidth = Math.max(34, containerWidth - rightStart - 8);
-
-    for (let i = 0; i < leftCount; i += 1) {
-      leftLanes.push({
-        side: "left",
-        xBase: Math.round((i + 0.5) * (leftWidth / Math.max(1, leftCount))),
-        nextTop: baseTop + i * (isMobile ? 22 : 28)
-      });
-    }
-    for (let i = 0; i < rightCount; i += 1) {
-      rightLanes.push({
-        side: "right",
-        xBase: Math.round(rightStart + (i + 0.5) * (rightWidth / Math.max(1, rightCount))),
-        nextTop: baseTop + i * (isMobile ? 20 : 24)
-      });
-    }
-
-    const lanes = leftLanes.concat(rightLanes);
-
-    cutouts.forEach(function (img, index) {
-      const width = baseWidth + ((index % 5) - 2) * (isMobile ? 2 : 4);
-      const lane = isMobile ? lanes[index % lanes.length] : lanes.reduce(function (best, current) {
-        return current.nextTop < best.nextTop ? current : best;
-      }, lanes[0]);
-      const maxWidthForSide = lane.side === "left"
-        ? Math.max(24, leftBoundary - 8)
-        : Math.max(24, containerWidth - rightBoundary - 8);
-      const safeWidth = Math.max(24, Math.min(width, maxWidthForSide));
-      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
-      const estHeight = safeWidth * Math.max(0.9, Math.min(2.5, ratio));
-
-      let top = lane.nextTop;
-      if (top > maxTop) {
-        top = baseTop + (index % 12) * (isMobile ? 44 : 66);
-      }
-
-      const rotation = (lane.side === "left" ? -1 : 1) * (2 + (index % 4) * 2);
-      const jitterX = ((index % 3) - 1) * (isMobile ? 3 : 6);
-
-      img.style.top = Math.round(top) + "px";
-      img.style.width = safeWidth + "px";
-      img.style.left = "";
-      img.style.right = "";
-      img.style.setProperty("--cutout-rot", rotation + "deg");
-      img.style.setProperty("--sway-dur", (1.5 + (index % 5) * 0.18).toFixed(2) + "s");
-      img.style.setProperty("--sway-delay", (-0.15 * (index % 7)).toFixed(2) + "s");
-      img.style.zIndex = String(110 + (index % 6));
-
-      if (lane.side === "left") {
-        const preferredLeft = lane.xBase + jitterX - safeWidth / 2;
-        const maxLeft = Math.max(0, leftBoundary - safeWidth - 4);
-        img.style.left = Math.round(clamp(preferredLeft, 0, maxLeft)) + "px";
-      } else {
-        const preferredLeft = lane.xBase + jitterX - safeWidth / 2;
-        const minLeft = Math.min(containerWidth - safeWidth, rightBoundary + 4);
-        const maxLeft = Math.max(minLeft, containerWidth - safeWidth - 4);
-        img.style.left = Math.round(clamp(preferredLeft, minLeft, maxLeft)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-01.png") !== -1) {
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.left = Math.round(currentLeft - (isMobile ? 8 : 28)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-50.png") !== -1) {
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.left = Math.round(currentLeft - (isMobile ? 6 : 12)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-55.png") !== -1) {
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-43.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.top = Math.round(currentTop + (isMobile ? 6 : 10)) + "px";
-        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-26.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        img.style.top = Math.round(currentTop + (isMobile ? 12 : 32)) + "px";
-        img.style.width = Math.round(safeWidth * 1.07) + "px";
-        const currentRotation = rotation - (isMobile ? 8 : 12);
-        img.style.setProperty("--cutout-rot", currentRotation + "deg");
-      }
-
-      if (img.src.indexOf("cutout-28.png") !== -1) {
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.left = Math.round(currentLeft + (isMobile ? 12 : 26)) + "px";
-        img.style.width = Math.round(safeWidth * 1.1) + "px";
-      }
-
-      if (img.src.indexOf("cutout-19.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.top = Math.round(currentTop - (isMobile ? 16 : 28)) + "px";
-        img.style.left = Math.round(currentLeft + (isMobile ? 8 : 16)) + "px";
-        img.style.width = Math.round(safeWidth * 0.81) + "px";
-      }
-
-      if (img.src.indexOf("cutout-13.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        img.style.top = Math.round(currentTop - (isMobile ? 24 : 44)) + "px";
-        img.style.width = Math.round(safeWidth * 1.5) + "px";
-      }
-
-      if (img.src.indexOf("cutout-07.png") !== -1) {
-        img.style.width = Math.round(safeWidth * 1.25) + "px";
-        const currentRotation = rotation + (isMobile ? 8 : 12);
-        img.style.setProperty("--cutout-rot", currentRotation + "deg");
-      }
-
-      if (img.src.indexOf("cutout-12.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.top = Math.round(currentTop - (isMobile ? 16 : 30)) + "px";
-        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 20)) + "px";
-        img.style.width = Math.round(safeWidth * 1.1) + "px";
-      }
-
-      if (img.src.indexOf("cutout-03.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.top = Math.round(currentTop - (isMobile ? 14 : 24)) + "px";
-        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
-        const currentRotation = rotation + (isMobile ? 8 : 12);
-        img.style.setProperty("--cutout-rot", currentRotation + "deg");
-        cutout3Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: parseFloat(img.style.top) || 0,
-          width: parseFloat(img.style.width) || safeWidth
-        };
-      }
-
-      if (img.src.indexOf("cutout-05.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.top = Math.round(currentTop + (isMobile ? 14 : 24)) + "px";
-        img.style.left = Math.round(currentLeft + (isMobile ? 8 : 14)) + "px";
-        img.style.width = Math.round(safeWidth * 1.1) + "px";
-      }
-
-      if (img.src.indexOf("cutout-17.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        const currentLeft = parseFloat(img.style.left) || 0;
-        img.style.top = Math.round(currentTop - (isMobile ? 10 : 18)) + "px";
-        img.style.left = Math.max(0, Math.round(currentLeft - (isMobile ? 36 : 82))) + "px";
-        img.style.width = Math.round(safeWidth * 2.275) + "px";
-        const currentRotation = rotation - (isMobile ? 8 : 12);
-        img.style.setProperty("--cutout-rot", currentRotation + "deg");
-      }
-
-      if (img.src.indexOf("cutout-48.png") !== -1) {
-        cutout48Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: parseFloat(img.style.top) || 0
-        };
-      }
-
-      if (img.src.indexOf("cutout-49.png") !== -1) {
-        cutout49 = img;
-      }
-
-      if (img.src.indexOf("cutout-57.png") !== -1) {
-        cutout57 = img;
-      }
-
-      if (img.src.indexOf("cutout-56.png") !== -1) {
-        cutout56 = img;
-      }
-
-      if (img.src.indexOf("cutout-64.png") !== -1) {
-        const currentTop = parseFloat(img.style.top) || 0;
-        img.style.top = Math.round(currentTop - (isMobile ? 10 : 18)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-64.png") !== -1) {
-        cutout64Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: parseFloat(img.style.top) || 0,
-          width: parseFloat(img.style.width) || safeWidth,
-          zIndex: parseInt(img.style.zIndex, 10) || 110
-        };
-      }
-
-      if (img.src.indexOf("cutout-05.png") !== -1 || img.src.indexOf("cutout-07.png") !== -1) {
-        const finalWidth = parseFloat(img.style.width) || safeWidth;
-        const clampedRatio = Math.max(0.9, Math.min(2.5, ratio));
-        const finalHeight = finalWidth * clampedRatio;
-        let stuckLeft = 0;
-        let stuckTop = Math.max(0, Math.round(containerHeight - finalHeight));
-        if (img.src.indexOf("cutout-05.png") !== -1) {
-          const liftAmount = isMobile ? 18 : 36;
-          stuckTop = Math.max(0, stuckTop - liftAmount);
-        }
-        if (img.src.indexOf("cutout-07.png") !== -1) {
-          const rightOffset = isMobile ? 36 : 84;
-          const upOffset = isMobile ? 30 : 68;
-          stuckLeft = rightOffset;
-          stuckTop = Math.max(0, stuckTop - upOffset);
-        }
-        img.style.left = stuckLeft + "px";
-        img.style.right = "";
-        img.style.top = stuckTop + "px";
-      }
-
-      if (img.src.indexOf("cutout-07.png") !== -1) {
-        cutout7Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: parseFloat(img.style.top) || 0,
-          width: parseFloat(img.style.width) || safeWidth,
-          zIndex: parseInt(img.style.zIndex, 10) || 110
-        };
-      }
-
-      if (img.src.indexOf("cutout-59.png") !== -1) {
-        cutout59Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: parseFloat(img.style.top) || 0,
-          width: parseFloat(img.style.width) || safeWidth,
-          zIndex: parseInt(img.style.zIndex, 10) || 110
-        };
-      }
-
-      const finalWidth = parseFloat(img.style.width) || safeWidth;
-      const finalTop = parseFloat(img.style.top) || 0;
-      const currentLeft = parseFloat(img.style.left) || 0;
-      if (lane.side === "left") {
-        const maxLeft = Math.max(0, leftBoundary - finalWidth - 2);
-        img.style.left = Math.round(clamp(currentLeft, 0, maxLeft)) + "px";
-      } else {
-        const minLeft = Math.min(containerWidth - finalWidth, rightBoundary + 2);
-        const maxLeft = Math.max(minLeft, containerWidth - finalWidth - 2);
-        img.style.left = Math.round(clamp(currentLeft, minLeft, maxLeft)) + "px";
-      }
-
-      if (img.src.indexOf("cutout-03.png") !== -1) {
-        cutout3Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: finalTop,
-          width: finalWidth
-        };
-      }
-
-      if (img.src.indexOf("cutout-48.png") !== -1) {
-        cutout48Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: finalTop
-        };
-      }
-
-      if (img.src.indexOf("cutout-07.png") !== -1) {
-        cutout7Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: finalTop,
-          width: finalWidth,
-          zIndex: parseInt(img.style.zIndex, 10) || 110
-        };
-      }
-
-      if (img.src.indexOf("cutout-59.png") !== -1) {
-        cutout59Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: finalTop,
-          width: finalWidth,
-          zIndex: parseInt(img.style.zIndex, 10) || 110
-        };
-      }
-
-      if (img.src.indexOf("cutout-64.png") !== -1) {
-        cutout64Target = {
-          left: parseFloat(img.style.left) || 0,
-          top: finalTop,
-          width: finalWidth,
-          zIndex: parseInt(img.style.zIndex, 10) || 110
-        };
-      }
-
-      lane.nextTop = top + estHeight + minGap;
-    });
-
-    if (osamaCutout && cutout3Target) {
-      const osamaWidth = osamaCutout.offsetWidth || (isMobile ? 120 : 190);
-      const xOffset = isMobile ? -10 : -28;
-      const yOffset = isMobile ? 56 : 92;
-      const desiredLeft = cutout3Target.left + cutout3Target.width + xOffset;
-      const desiredTop = cutout3Target.top + yOffset;
-      const clampedLeft = Math.min(
-        Math.max(0, Math.round(desiredLeft)),
-        Math.max(0, Math.round(containerWidth - osamaWidth - 6))
-      );
-      const clampedTop = Math.max(0, Math.round(desiredTop));
-
-      osamaCutout.style.left = clampedLeft + "px";
-      osamaCutout.style.top = clampedTop + "px";
-      osamaCutout.style.right = "auto";
-      osamaCutout.style.bottom = "auto";
-      if (typeof osamaCutout.playbackRate === "number") {
-        osamaCutout.playbackRate = 1.12;
-      }
-    }
-
-    if (nineCutout && cutout48Target) {
-      const nineWidth = nineCutout.offsetWidth || (isMobile ? 110 : 180);
-      const xGap = isMobile ? 8 : 12;
-      const xRightNudge = isMobile ? 6 : 10;
-      const yOffset = isMobile ? 26 : 44;
-      const desiredLeft = cutout48Target.left - nineWidth - xGap + xRightNudge;
-      const desiredTop = cutout48Target.top + yOffset;
-      const clampedLeft = Math.max(0, Math.round(desiredLeft));
-      const clampedTop = Math.max(0, Math.round(desiredTop));
-
-      nineCutout.style.left = clampedLeft + "px";
-      nineCutout.style.top = clampedTop + "px";
-      nineCutout.style.right = "auto";
-      nineCutout.style.bottom = "auto";
-      nineCutout.style.position = "absolute";
-    }
-
-    if (cutout56 && cutout59Target) {
-      const baseCutout56Width = parseFloat(cutout56.style.width) || (isMobile ? 47 : 105);
-      const cutout56Width = Math.round(baseCutout56Width * 1.1);
-      const xGap = isMobile ? 6 : 12;
-      const xLeftNudge = isMobile ? 11 : 22;
-      const yOffset = isMobile ? 2 : 4;
-      const desiredLeft = cutout59Target.left + cutout59Target.width + xGap - xLeftNudge;
-      const clampedLeft = Math.min(
-        Math.max(0, Math.round(desiredLeft)),
-        Math.max(0, Math.round(containerWidth - cutout56Width - 6))
-      );
-      const clampedTop = Math.max(0, Math.round(cutout59Target.top + yOffset));
-
-      cutout56.style.width = cutout56Width + "px";
-      cutout56.style.left = clampedLeft + "px";
-      cutout56.style.top = clampedTop + "px";
-      cutout56.style.right = "";
-      cutout56.style.zIndex = String(cutout59Target.zIndex + 1);
-    }
-
-    if (cutout57 && cutout7Target) {
-      const cutout57Width = parseFloat(cutout57.style.width) || (isMobile ? 47 : 105);
-      const xGap = isMobile ? 6 : 12;
-      const yOffset = isMobile ? 2 : 4;
-      const desiredLeft = cutout7Target.left + cutout7Target.width + xGap;
-      const clampedLeft = Math.min(
-        Math.max(0, Math.round(desiredLeft)),
-        Math.max(0, Math.round(containerWidth - cutout57Width - 6))
-      );
-      const clampedTop = Math.max(0, Math.round(cutout7Target.top + yOffset));
-
-      cutout57.style.left = clampedLeft + "px";
-      cutout57.style.top = clampedTop + "px";
-      cutout57.style.right = "";
-      cutout57.style.zIndex = String(cutout7Target.zIndex + 1);
-    }
-
-    if (cutout49 && cutout64Target) {
-      const cutout49Width = parseFloat(cutout49.style.width) || (isMobile ? 47 : 105);
-      const xGap = isMobile ? 8 : 14;
-      const yOffset = isMobile ? 10 : 16;
-      let desiredLeft = cutout64Target.left + cutout64Target.width + xGap;
-
-      if (desiredLeft + cutout49Width > containerWidth - 6) {
-        desiredLeft = cutout64Target.left - cutout49Width - xGap;
-      }
-
-      const clampedLeft = Math.min(
-        Math.max(0, Math.round(desiredLeft)),
-        Math.max(0, Math.round(containerWidth - cutout49Width - 6))
-      );
-      const clampedTop = Math.max(0, Math.round(cutout64Target.top + yOffset));
-
-      cutout49.style.left = clampedLeft + "px";
-      cutout49.style.top = clampedTop + "px";
-      cutout49.style.right = "";
-      cutout49.style.zIndex = String(cutout64Target.zIndex + 1);
-    }
-  }
-
   function setupCutouts() {
-    const container = document.querySelector(".page-scroll");
-    if (!container) return;
+    const leftColumn = document.getElementById("cutout-column-left");
+    const rightColumn = document.getElementById("cutout-column-right");
+    if (!leftColumn || !rightColumn) return;
 
-    const layer = document.createElement("div");
-    layer.className = "artist-cutout-layer";
+    leftColumn.innerHTML = "";
+    rightColumn.innerHTML = "";
 
-    const compactViewport = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
-    const shouldTrim = lowPowerMode || compactViewport;
-    const maxCutouts = lowPowerMode ? 18 : 28;
-    const activeSources = shouldTrim
-      ? CUTOUT_SOURCES.filter(function (_src, index) {
-          return index === 0 || index % 2 === 1;
-        }).slice(0, maxCutouts)
-      : CUTOUT_SOURCES;
-
-    let layoutRaf = 0;
-    function scheduleLayout() {
-      if (layoutRaf) return;
-      layoutRaf = window.requestAnimationFrame(function () {
-        layoutRaf = 0;
-        layoutCutouts(layer, container);
-      });
-    }
+    const isSmallScreen = window.matchMedia("(max-width: 900px)").matches;
+    const maxCutouts = isSmallScreen ? 16 : 28;
+    const activeSources = CUTOUT_SOURCES.slice(0, maxCutouts);
 
     activeSources.forEach(function (src, index) {
       const img = createCutoutImage(src, index);
-      img.addEventListener("load", scheduleLayout);
-      layer.appendChild(img);
+      img.classList.remove("no-sway");
+      img.style.removeProperty("--cutout-rot");
+      img.style.removeProperty("--sway-dur");
+      img.style.removeProperty("--sway-delay");
+      if (index % 2 === 0) {
+        leftColumn.appendChild(img);
+      } else {
+        rightColumn.appendChild(img);
+      }
     });
+  }
 
-    container.appendChild(layer);
-    scheduleLayout();
-
-    window.addEventListener("resize", function () {
-      scheduleLayout();
-    });
+  function setupResponsiveStars() {
+    const mobileStarsQuery = window.matchMedia("(max-width: 900px)");
+    function applyStarsMode() {
+      if (!document.body) return;
+      document.body.classList.toggle("reduced-stars", mobileStarsQuery.matches);
+    }
+    applyStarsMode();
+    if (typeof mobileStarsQuery.addEventListener === "function") {
+      mobileStarsQuery.addEventListener("change", applyStarsMode);
+    } else if (typeof mobileStarsQuery.addListener === "function") {
+      mobileStarsQuery.addListener(applyStarsMode);
+    }
   }
 
   function setupCutoutVideos() {
@@ -989,7 +584,7 @@
     if (!videos.length) return;
 
     const visibleState = new WeakMap();
-    const keepSingleVideo = isIPhoneSafari;
+    const keepSingleVideo = UNIVERSAL_RENDER_MODE ? false : isIPhoneSafari;
 
     function syncPlayback(video) {
       const isVisible = visibleState.get(video) !== false;
@@ -1064,7 +659,8 @@
     let y = 0;
     let rafId = 0;
     const margin = 10;
-    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+    const profile = getViewportProfile();
+    const isMobile = profile.isMobile;
     let vx = isMobile ? 3.1 : 4.2;
     let vy = isMobile ? 2.5 : 3.4;
     const frameMs = lowPowerMode ? 1000 / 24 : 1000 / 30;
@@ -1193,7 +789,8 @@
     let y = 0;
     let rafId = 0;
     const margin = 8;
-    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
+    const profile = getViewportProfile();
+    const isMobile = profile.isMobile;
     let vx = isMobile ? 1 : 1.3;
     let vy = isMobile ? 0.8 : 1.05;
     const frameMs = lowPowerMode ? 1000 / 20 : 1000 / 28;
@@ -1312,9 +909,12 @@
   window.addEventListener("resize", syncViewportHeightVar);
   window.addEventListener("orientationchange", syncViewportHeightVar);
   window.addEventListener("pageshow", syncViewportHeightVar);
+  window.addEventListener("resize", setupCutouts);
+  window.addEventListener("orientationchange", setupCutouts);
   setupBouncingBgVideo();
   setupBouncingLeaf();
   setupBackgroundVideos();
+  setupResponsiveStars();
   setupThemeSwitcher();
   setupPlayer();
   setupCutoutVideos();
