@@ -354,8 +354,8 @@ body::after,
 
 .site-header {
   margin-top: 0.8rem;
-  padding: 0.5rem 0.85rem;
-  border-radius: 14px;
+  padding: 0.62rem 1rem;
+  border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.52);
   background: rgba(255, 255, 255, 0.14);
   backdrop-filter: blur(16px) saturate(1.1);
@@ -371,14 +371,14 @@ h1,
 h2,
 h3 {
   margin: 0 0 0.65rem;
-  letter-spacing: 0.02em;
-  word-spacing: -0.06em;
+  letter-spacing: 0;
+  word-spacing: 0;
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
   font-weight: 700;
 }
 
 h1 {
-  font-size: clamp(1.74rem, 4vw, 2.72rem);
+  font-size: clamp(1.68rem, 3.7vw, 2.62rem);
   line-height: 1.1;
   color: #ffc6ef;
   text-shadow:
@@ -411,8 +411,8 @@ h3 {
 
 p {
   font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
-  font-size: 1.1rem;
-  word-spacing: -0.05em;
+  font-size: 1.02rem;
+  word-spacing: 0;
 }
 
 .content-wrap {
@@ -425,8 +425,8 @@ p {
 .manifesto {
   position: relative;
   z-index: 2;
-  margin-bottom: 0.58rem;
-  padding: 0.68rem 0.82rem;
+  margin-bottom: 0.74rem;
+  padding: 0.8rem 0.95rem;
   border: 1px solid rgba(255, 255, 255, 0.5);
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.12);
@@ -542,8 +542,8 @@ p {
 }
 
 .manifesto h2 {
-  font-size: 1.24rem;
-  margin-bottom: 0.42rem;
+  font-size: 1.18rem;
+  margin-bottom: 0.36rem;
   color: #ffc6ef;
   text-shadow:
     0 0 0.7px rgba(255, 245, 252, 0.9),
@@ -552,10 +552,15 @@ p {
 }
 
 .manifesto p {
-  margin: 0 0 1.05rem;
+  margin: 0 0 0.72rem;
   color: #fdf6ff;
-  font-size: 1.05rem;
-  line-height: 1.8;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  max-width: 68ch;
+}
+
+.manifesto p:last-child {
+  margin-bottom: 0;
 }
 
 .site-footer {
@@ -578,6 +583,7 @@ p {
   object-fit: contain;
   filter: drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
   opacity: 0;
+  content-visibility: auto;
   transform: rotate(var(--cutout-rot, 0deg));
   transform-origin: center bottom;
   animation:
@@ -814,12 +820,12 @@ p {
 
 @media (max-width: 900px) {
   .artist-cutout {
-    opacity: 0.85;
+    opacity: 0.74;
   }
 
   .manifesto {
-    margin: 20px 12px;
-    padding: 24px 18px;
+    margin: 16px 10px;
+    padding: 18px 16px;
   }
 }
 
@@ -867,17 +873,19 @@ p {
 
   .site-header,
   .site-footer {
-    width: min(520px, 92%);
-    padding: 0.95rem 0 0.65rem;
+    width: min(520px, 94%);
+    padding: 0.78rem 0.82rem 0.68rem;
   }
 
   .content-wrap {
-    width: min(520px, 86%);
+    width: min(520px, 82%);
+    margin-top: 0.58rem;
     margin-bottom: 1rem;
   }
 
   h1 {
-    font-size: clamp(1.02rem, 5.2vw, 1.42rem);
+    font-size: clamp(1.28rem, 7.2vw, 1.92rem);
+    line-height: 1.05;
     margin-bottom: 0.35rem;
   }
 
@@ -888,33 +896,48 @@ p {
 
   .lead {
     width: 100%;
-    font-size: 0.74rem;
-    line-height: 1.28;
+    font-size: 0.84rem;
+    line-height: 1.3;
   }
 
   .manifesto {
-    padding: 0.62rem 0.68rem;
-    margin-bottom: 0.92rem;
-    border-radius: 11px;
+    padding: 0.86rem 0.88rem;
+    margin: 0 0 1rem;
+    border-radius: 10px;
+  }
+
+  .manifesto h2 {
+    font-size: clamp(1.18rem, 6.4vw, 1.72rem);
+    line-height: 1.06;
+    margin-bottom: 0.55rem;
   }
 
   .manifesto p {
-    margin: 0.42rem 0;
-    font-size: 0.8rem;
-    line-height: 1.28;
+    margin: 0 0 0.62rem;
+    font-size: 0.78rem;
+    line-height: 1.34;
   }
 
   .artist-cutout {
-    width: 42px;
+    width: 34px;
     max-width: none;
+    opacity: 0.62;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.38));
   }
 
   .bg-player {
-    top: 10px;
-    right: 10px;
+    top: auto;
+    right: 50%;
+    bottom: calc(4.9rem + env(safe-area-inset-bottom));
     gap: 0.35rem;
     padding: 0.35rem 0.45rem;
-    max-width: calc(100vw - 20px);
+    max-width: calc(100vw - 48px);
+    transform: translateX(50%) scale(0.78) !important;
+    transform-origin: bottom center;
+    border-radius: 999px;
+    background: rgba(23, 23, 28, 0.78);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
 
   .osama-cutout {

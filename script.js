@@ -135,35 +135,23 @@
   const MOBILE_CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
     "assets/images/cutout-01.png",
-    "assets/images/cutout-02.png",
     "assets/images/cutout-03.png",
     "assets/images/cutout-05.png",
     "assets/images/cutout-07.png",
-    "assets/images/cutout-08.png",
     "assets/images/cutout-10.png",
     "assets/images/cutout-12.png",
-    "assets/images/cutout-13.png",
     "assets/images/cutout-17.png",
     "assets/images/cutout-19.png",
-    "assets/images/cutout-21.png",
     "assets/images/cutout-24.png",
     "assets/images/cutout-26.png",
-    "assets/images/cutout-28.png",
     "assets/images/cutout-31.png",
     "assets/images/cutout-35.png",
     "assets/images/cutout-40.png",
-    "assets/images/cutout-41.png",
-    "assets/images/cutout-43.png",
     "assets/images/cutout-46.png",
     "assets/images/cutout-48.png",
     "assets/images/cutout-49.png",
-    "assets/images/cutout-51.png",
-    "assets/images/cutout-56.png",
-    "assets/images/cutout-57.png",
     "assets/images/cutout-58.png",
-    "assets/images/cutout-59.png",
-    "assets/images/cutout-60.png",
-    "assets/images/cutout-64.png"
+    "assets/images/cutout-60.png"
   ];
   const DEFAULT_TRACK_INDEX = Math.max(
     0,
@@ -534,11 +522,11 @@
     const containerRect = container.getBoundingClientRect();
     const containerWidth = container.clientWidth;
     const containerHeight = Math.max(container.scrollHeight, window.innerHeight + 240);
-    const baseTop = isMobile ? 14 : 24;
+    const baseTop = isMobile ? 28 : 24;
     const maxTop = containerHeight - (isMobile ? 96 : 140);
-    const baseWidth = isMobile ? 34 : isLite ? 72 : 105;
-    const minGap = isMobile ? 24 : isLite ? 34 : 26;
-    const laneCount = isMobile ? 6 : isLite ? 6 : 8;
+    const baseWidth = isMobile ? 28 : isLite ? 72 : 105;
+    const minGap = isMobile ? 42 : isLite ? 34 : 26;
+    const laneCount = isMobile ? 4 : isLite ? 6 : 8;
 
     let safeLeft = Math.round(containerWidth * 0.23);
     let safeRight = Math.round(containerWidth * 0.77);
@@ -551,9 +539,9 @@
     const rightLanes = [];
     const leftCount = Math.floor(laneCount / 2);
     const rightCount = laneCount - leftCount;
-    const leftWidth = Math.max(40, safeLeft - 14);
+    const leftWidth = Math.max(30, safeLeft - (isMobile ? 22 : 14));
     const rightStart = Math.min(containerWidth - 40, safeRight + 14);
-    const rightWidth = Math.max(40, containerWidth - rightStart - 14);
+    const rightWidth = Math.max(30, containerWidth - rightStart - (isMobile ? 22 : 14));
 
     for (let i = 0; i < leftCount; i += 1) {
       leftLanes.push({
@@ -772,6 +760,22 @@
           width: parseFloat(img.style.width) || safeWidth,
           zIndex: parseInt(img.style.zIndex, 10) || 110
         };
+      }
+
+      if (isMobile) {
+        const finalWidth = parseFloat(img.style.width) || safeWidth;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        const edgeInset = 2;
+        let clampedLeft = currentLeft;
+
+        if (lane.side === "left") {
+          clampedLeft = Math.min(currentLeft, Math.max(edgeInset, safeLeft - finalWidth - 5));
+        } else {
+          clampedLeft = Math.max(currentLeft, Math.min(containerWidth - finalWidth - edgeInset, safeRight + 5));
+        }
+
+        clampedLeft = Math.min(Math.max(edgeInset, clampedLeft), Math.max(edgeInset, containerWidth - finalWidth - edgeInset));
+        img.style.left = Math.round(clampedLeft) + "px";
       }
 
       lane.nextTop = top + estHeight + minGap;
