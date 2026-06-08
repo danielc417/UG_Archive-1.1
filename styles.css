@@ -1448,3 +1448,115 @@ h2,
     height: 18px;
   }
 }
+
+@media (max-width: 640px) {
+  body {
+    line-height: 1.36;
+    padding-bottom: calc(5.4rem + env(safe-area-inset-bottom));
+  }
+
+  .page-scroll {
+    padding-bottom: calc(5.75rem + env(safe-area-inset-bottom));
+  }
+
+  .site-header {
+    width: calc(100% - 1.25rem);
+    margin-top: 0.55rem;
+    padding: 0.8rem 0.9rem 0.78rem;
+    border-radius: 10px;
+  }
+
+  .site-footer {
+    width: calc(100% - 1.25rem);
+  }
+
+  .theme-dot {
+    left: 8px;
+    top: 8px;
+    width: 14px;
+    height: 14px;
+  }
+
+  h1 {
+    max-width: 92%;
+    margin: 0 auto 0.38rem;
+    font-size: clamp(1.14rem, 6.1vw, 1.58rem);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  .lead {
+    max-width: 96%;
+    font-size: 0.72rem;
+    line-height: 1.22;
+  }
+
+  .content-wrap {
+    width: min(520px, calc(100% - 4.8rem));
+    margin-top: 0.72rem;
+    margin-bottom: 1rem;
+  }
+
+  .manifesto {
+    margin: 0 0 1.05rem;
+    padding: 0.78rem 0.86rem;
+    border-radius: 10px;
+  }
+
+  .manifesto h2 {
+    margin-bottom: 0.48rem;
+    font-size: clamp(1rem, 5.6vw, 1.32rem);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  .manifesto p {
+    margin: 0.5rem 0;
+    font-size: clamp(0.73rem, 3.55vw, 0.86rem);
+    line-height: 1.29;
+  }
+
+  .artist-cutout {
+    width: 34px;
+    opacity: 0.92;
+  }
+
+  body.low-power .artist-cutout {
+    filter: drop-shadow(0 5px 7px rgba(0, 0, 0, 0.46));
+  }
+
+  .bg-player {
+    top: auto;
+    right: auto;
+    left: 50%;
+    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    gap: 0.32rem;
+    padding: 0.34rem 0.48rem;
+    max-width: calc(100vw - 1rem);
+    border-radius: 999px;
+    background: rgba(8, 8, 14, 0.58);
+    -webkit-backdrop-filter: blur(10px) saturate(1.05);
+    backdrop-filter: blur(10px) saturate(1.05);
+    transform: translateX(-50%) scale(0.9) !important;
+    transform-origin: bottom center;
+  }
+
+  .bg-disc {
+    width: 34px;
+    height: 34px;
+  }
+
+  .bg-nav {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bg-title {
+    max-width: 64px;
+    font-size: 0.66rem;
+  }
+
+  .bg-volume {
+    width: 48px;
+  }
+}

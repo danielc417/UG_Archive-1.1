@@ -134,20 +134,35 @@
   ];
   const MOBILE_CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
+    "assets/images/cutout-01.png",
+    "assets/images/cutout-02.png",
     "assets/images/cutout-03.png",
     "assets/images/cutout-05.png",
     "assets/images/cutout-07.png",
+    "assets/images/cutout-08.png",
+    "assets/images/cutout-10.png",
     "assets/images/cutout-12.png",
+    "assets/images/cutout-13.png",
     "assets/images/cutout-17.png",
+    "assets/images/cutout-19.png",
+    "assets/images/cutout-21.png",
+    "assets/images/cutout-24.png",
     "assets/images/cutout-26.png",
     "assets/images/cutout-28.png",
+    "assets/images/cutout-31.png",
+    "assets/images/cutout-35.png",
     "assets/images/cutout-40.png",
+    "assets/images/cutout-41.png",
     "assets/images/cutout-43.png",
+    "assets/images/cutout-46.png",
     "assets/images/cutout-48.png",
     "assets/images/cutout-49.png",
+    "assets/images/cutout-51.png",
     "assets/images/cutout-56.png",
     "assets/images/cutout-57.png",
+    "assets/images/cutout-58.png",
     "assets/images/cutout-59.png",
+    "assets/images/cutout-60.png",
     "assets/images/cutout-64.png"
   ];
   const DEFAULT_TRACK_INDEX = Math.max(
@@ -521,9 +536,9 @@
     const containerHeight = Math.max(container.scrollHeight, window.innerHeight + 240);
     const baseTop = isMobile ? 14 : 24;
     const maxTop = containerHeight - (isMobile ? 96 : 140);
-    const baseWidth = isMobile ? 42 : isLite ? 72 : 105;
-    const minGap = isMobile ? 38 : isLite ? 34 : 26;
-    const laneCount = isMobile ? 4 : isLite ? 6 : 8;
+    const baseWidth = isMobile ? 34 : isLite ? 72 : 105;
+    const minGap = isMobile ? 24 : isLite ? 34 : 26;
+    const laneCount = isMobile ? 6 : isLite ? 6 : 8;
 
     let safeLeft = Math.round(containerWidth * 0.23);
     let safeRight = Math.round(containerWidth * 0.77);
