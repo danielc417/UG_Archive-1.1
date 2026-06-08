@@ -16,7 +16,7 @@
       title: "Project Pat",
       artist: "Nettspend",
       src: "assets/audio/project-pat-nettspend.mp3",
-      cover: "assets/images/player-spin-projectpat.jpg"
+      cover: "assets/images/player-spin-projectpat-small.jpg"
     },
     {
       title: "BA$$",
@@ -52,59 +52,18 @@
   };
   const THEME_ORDER = ["midnight", "rose"];
   const MOBILE_BREAKPOINT_QUERY = "(max-width: 640px)";
-  const SMALL_SCREEN_BREAKPOINT_QUERY = "(max-width: 900px)";
-  const TABLET_BREAKPOINT_QUERY = "(max-width: 1024px)";
-  const COMPACT_BREAKPOINT_QUERY = "(max-width: 1366px)";
-  const TOUCH_POINTER_QUERY = "(pointer: coarse)";
+  const LITE_BREAKPOINT_QUERY = "(max-width: 1180px)";
   const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
-  const UNIVERSAL_RENDER_MODE = false;
-  const UNIVERSAL_CUTOUT_LIMIT = 28;
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  const hardwareThreads = navigator.hardwareConcurrency || 0;
-  const deviceMemory = navigator.deviceMemory || 0;
-  const userAgent = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-  const isAppleTouchDevice =
-    /iP(hone|od|ad)/i.test(userAgent) || (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-  const isIOSSafari =
-    isAppleTouchDevice && /WebKit/i.test(userAgent) && !/CriOS|FxiOS|EdgiOS|OPiOS|DuckDuckGo|GSA/i.test(userAgent);
-  const isIPhoneSafari = isIOSSafari && /iPhone/i.test(userAgent);
-  let lowPowerMode = false;
-
-  function shouldUseLowPowerMode() {
-    if (UNIVERSAL_RENDER_MODE) return false;
-    const prefersReducedMotion = window.matchMedia(REDUCED_MOTION_QUERY).matches;
-    const mobileViewport = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
-    const touchTabletViewport =
-      window.matchMedia(TABLET_BREAKPOINT_QUERY).matches && window.matchMedia(TOUCH_POINTER_QUERY).matches;
-    const weakHardware = (deviceMemory > 0 && deviceMemory <= 4) || (hardwareThreads > 0 && hardwareThreads <= 4);
-    const constrainedDesktop = weakHardware && window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
-    return prefersReducedMotion || !!(connection && connection.saveData) || mobileViewport || touchTabletViewport || constrainedDesktop;
-  }
-
-  function getViewportProfile() {
-    if (UNIVERSAL_RENDER_MODE) {
-      return {
-        isMobile: false,
-        isTablet: false,
-        isCompact: false,
-        isTouch: false,
-        lowPowerMode: false
-      };
-    }
-
-    const isMobile = window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches;
-    const isTablet = !isMobile && window.matchMedia(TABLET_BREAKPOINT_QUERY).matches;
-    const isCompact = window.matchMedia(COMPACT_BREAKPOINT_QUERY).matches;
-    const isTouch = window.matchMedia(TOUCH_POINTER_QUERY).matches;
-    return {
-      isMobile: isMobile,
-      isTablet: isTablet,
-      isCompact: isCompact,
-      isTouch: isTouch,
-      lowPowerMode: shouldUseLowPowerMode()
-    };
-  }
+  const PERFORMANCE_PROFILE = {
+    mobile: window.matchMedia(MOBILE_BREAKPOINT_QUERY).matches,
+    lite: window.matchMedia(LITE_BREAKPOINT_QUERY).matches,
+    reducedMotion: window.matchMedia(REDUCED_MOTION_QUERY).matches,
+    savesData: !!(connection && connection.saveData)
+  };
+  PERFORMANCE_PROFILE.lite =
+    PERFORMANCE_PROFILE.lite || PERFORMANCE_PROFILE.mobile || PERFORMANCE_PROFILE.reducedMotion || PERFORMANCE_PROFILE.savesData;
+  const LOW_POWER_MODE = PERFORMANCE_PROFILE.mobile || PERFORMANCE_PROFILE.reducedMotion || PERFORMANCE_PROFILE.savesData;
   const CUTOUT_SOURCES = [
     "assets/images/osamason-cutout.png",
     "assets/images/cutout-01.png",
@@ -173,6 +132,24 @@
     "assets/images/cutout-64.png",
     "assets/images/cutout-65.png"
   ];
+  const MOBILE_CUTOUT_SOURCES = [
+    "assets/images/osamason-cutout.png",
+    "assets/images/cutout-03.png",
+    "assets/images/cutout-05.png",
+    "assets/images/cutout-07.png",
+    "assets/images/cutout-12.png",
+    "assets/images/cutout-17.png",
+    "assets/images/cutout-26.png",
+    "assets/images/cutout-28.png",
+    "assets/images/cutout-40.png",
+    "assets/images/cutout-43.png",
+    "assets/images/cutout-48.png",
+    "assets/images/cutout-49.png",
+    "assets/images/cutout-56.png",
+    "assets/images/cutout-57.png",
+    "assets/images/cutout-59.png",
+    "assets/images/cutout-64.png"
+  ];
   const DEFAULT_TRACK_INDEX = Math.max(
     0,
     TRACKS.findIndex(function (track) {
@@ -239,8 +216,8 @@
     const audio = new Audio();
     audio.src = currentTrack().src;
     audio.loop = false;
-    audio.preload = "auto";
-    audio.autoplay = true;
+    audio.preload = "metadata";
+    audio.autoplay = false;
     audio.volume = state.volume;
     audio.muted = state.muted;
     return audio;
@@ -261,44 +238,57 @@
     if (body) body.setAttribute("data-theme", themeName);
   }
 
-  function syncViewportHeightVar() {
-    const root = document.documentElement;
-    if (!root) return;
-    root.style.setProperty("--app-vh", window.innerHeight * 0.01 + "px");
-  }
-
-  function applyIOSVideoHints(video) {
-    if (!video || !isIOSSafari) return;
-    video.playsInline = true;
-    video.muted = true;
-    video.setAttribute("playsinline", "");
-    video.setAttribute("webkit-playsinline", "");
-    video.setAttribute("muted", "");
-    video.setAttribute("disablepictureinpicture", "");
-    video.setAttribute("disableremoteplayback", "");
-    if (isIPhoneSafari) {
-      video.preload = "metadata";
-    }
-    if ("disablePictureInPicture" in video) {
-      video.disablePictureInPicture = true;
-    }
-    if ("disableRemotePlayback" in video) {
-      video.disableRemotePlayback = true;
-    }
-  }
-
   function applyPerformanceProfile() {
     if (!document.body) return;
-    const profile = getViewportProfile();
-    lowPowerMode = profile.lowPowerMode;
-    document.body.classList.toggle("low-power", profile.lowPowerMode);
-    document.body.classList.toggle("mobile-layout", profile.isMobile);
-    document.body.classList.toggle("tablet-layout", profile.isTablet);
-    document.body.classList.toggle("compact-layout", profile.isCompact);
-    document.body.classList.toggle("touch-device", profile.isTouch);
-    document.body.classList.toggle("universal-render", UNIVERSAL_RENDER_MODE);
-    document.body.classList.toggle("ios-safari", UNIVERSAL_RENDER_MODE ? false : isIOSSafari);
-    document.body.classList.toggle("iphone-safari", UNIVERSAL_RENDER_MODE ? false : isIPhoneSafari);
+    document.body.classList.toggle("low-power", LOW_POWER_MODE);
+    document.body.classList.toggle("lite-power", PERFORMANCE_PROFILE.lite);
+    document.body.classList.toggle("mobile-power", PERFORMANCE_PROFILE.mobile);
+    document.body.classList.toggle("save-data", PERFORMANCE_PROFILE.savesData);
+  }
+
+  function uniqueSources(sources) {
+    return sources.filter(function (src, index, list) {
+      return list.indexOf(src) === index;
+    });
+  }
+
+  function getActiveCutoutSources() {
+    if (LOW_POWER_MODE) {
+      return MOBILE_CUTOUT_SOURCES;
+    }
+
+    if (PERFORMANCE_PROFILE.lite) {
+      return uniqueSources(
+        MOBILE_CUTOUT_SOURCES.concat(
+          CUTOUT_SOURCES.filter(function (_src, index) {
+            return index % 2 === 0;
+          }).slice(0, 32)
+        )
+      ).slice(0, 40);
+    }
+
+    return CUTOUT_SOURCES;
+  }
+
+  function disableMediaElement(media) {
+    media.pause();
+    media.classList.add("media-disabled");
+    media.removeAttribute("autoplay");
+    media.removeAttribute("src");
+    Array.from(media.querySelectorAll("source")).forEach(function (source) {
+      source.removeAttribute("src");
+    });
+    media.load();
+  }
+
+  function hydrateMediaElement(media) {
+    media.classList.remove("media-disabled");
+    Array.from(media.querySelectorAll("source")).forEach(function (source) {
+      if (!source.getAttribute("src") && source.dataset.src) {
+        source.setAttribute("src", source.dataset.src);
+      }
+    });
+    media.load();
   }
 
   function setupThemeSwitcher() {
@@ -494,10 +484,12 @@
 
   function createCutoutImage(src, index) {
     const img = document.createElement("img");
-    img.className = "artist-cutout cutout";
-    if (lowPowerMode || index % 2 === 0) {
+    img.className = "artist-cutout";
+    if (LOW_POWER_MODE || index % 2 === 0) {
       img.classList.add("no-sway");
     }
+    img.loading = "lazy";
+    img.decoding = "async";
     img.src = src;
     img.alt = "Artist cutout " + (index + 1);
     const sectionPhase = Math.min(3, Math.floor((index / Math.max(1, CUTOUT_SOURCES.length - 1)) * 4));
@@ -506,51 +498,410 @@
     return img;
   }
 
+  function layoutCutouts(layer, container) {
+    const cutouts = Array.from(layer.querySelectorAll(".artist-cutout"));
+    if (!cutouts.length) return;
+    const osamaCutout = document.querySelector(".osama-cutout");
+    const nineCutout = document.querySelector(".nine-cutout");
+    let cutout56 = null;
+    let cutout59Target = null;
+    let cutout57 = null;
+    let cutout7Target = null;
+    let cutout49 = null;
+    let cutout64Target = null;
+    let cutout3Target = null;
+    let cutout48Target = null;
+
+    const isMobile = PERFORMANCE_PROFILE.mobile;
+    const isLite = PERFORMANCE_PROFILE.lite;
+    const content = document.querySelector("main.content-wrap");
+    const contentRect = content ? content.getBoundingClientRect() : null;
+    const containerRect = container.getBoundingClientRect();
+    const containerWidth = container.clientWidth;
+    const containerHeight = Math.max(container.scrollHeight, window.innerHeight + 240);
+    const baseTop = isMobile ? 14 : 24;
+    const maxTop = containerHeight - (isMobile ? 96 : 140);
+    const baseWidth = isMobile ? 42 : isLite ? 72 : 105;
+    const minGap = isMobile ? 38 : isLite ? 34 : 26;
+    const laneCount = isMobile ? 4 : isLite ? 6 : 8;
+
+    let safeLeft = Math.round(containerWidth * 0.23);
+    let safeRight = Math.round(containerWidth * 0.77);
+    if (contentRect) {
+      safeLeft = Math.max(0, Math.round(contentRect.left - containerRect.left - 16));
+      safeRight = Math.min(containerWidth, Math.round(contentRect.right - containerRect.left + 16));
+    }
+
+    const leftLanes = [];
+    const rightLanes = [];
+    const leftCount = Math.floor(laneCount / 2);
+    const rightCount = laneCount - leftCount;
+    const leftWidth = Math.max(40, safeLeft - 14);
+    const rightStart = Math.min(containerWidth - 40, safeRight + 14);
+    const rightWidth = Math.max(40, containerWidth - rightStart - 14);
+
+    for (let i = 0; i < leftCount; i += 1) {
+      leftLanes.push({
+        side: "left",
+        xBase: Math.round((i + 0.5) * (leftWidth / Math.max(1, leftCount))),
+        nextTop: baseTop + i * (isMobile ? 22 : 28)
+      });
+    }
+    for (let i = 0; i < rightCount; i += 1) {
+      rightLanes.push({
+        side: "right",
+        xBase: Math.round(rightStart + (i + 0.5) * (rightWidth / Math.max(1, rightCount))),
+        nextTop: baseTop + i * (isMobile ? 20 : 24)
+      });
+    }
+
+    const lanes = leftLanes.concat(rightLanes);
+
+    cutouts.forEach(function (img, index) {
+      const width = baseWidth + ((index % 5) - 2) * (isMobile ? 2 : 4);
+      const safeWidth = Math.max(26, width);
+      const ratio = img.naturalWidth && img.naturalHeight ? img.naturalHeight / img.naturalWidth : 1.45;
+      const estHeight = safeWidth * Math.max(0.9, Math.min(2.5, ratio));
+      const lane = isMobile ? lanes[index % lanes.length] : lanes.reduce(function (best, current) {
+        return current.nextTop < best.nextTop ? current : best;
+      }, lanes[0]);
+
+      let top = lane.nextTop;
+      if (top > maxTop) {
+        top = baseTop + (index % 12) * (isMobile ? 44 : 66);
+      }
+
+      const rotation = (lane.side === "left" ? -1 : 1) * (2 + (index % 4) * 2);
+      const jitterX = ((index % 3) - 1) * (isMobile ? 3 : 6);
+
+      img.style.top = Math.round(top) + "px";
+      img.style.width = safeWidth + "px";
+      img.style.left = "";
+      img.style.right = "";
+      img.style.setProperty("--cutout-rot", rotation + "deg");
+      img.style.setProperty("--sway-dur", (1.5 + (index % 5) * 0.18).toFixed(2) + "s");
+      img.style.setProperty("--sway-delay", (-0.15 * (index % 7)).toFixed(2) + "s");
+      img.style.zIndex = String(110 + (index % 6));
+
+      if (lane.side === "left") {
+        const left = Math.max(6, lane.xBase + jitterX - safeWidth / 2);
+        img.style.left = Math.round(left) + "px";
+      } else {
+        const left = Math.min(containerWidth - safeWidth - 6, lane.xBase + jitterX - safeWidth / 2);
+        img.style.left = Math.round(left) + "px";
+      }
+
+      if (img.src.indexOf("cutout-01.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft - (isMobile ? 8 : 28)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-50.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft - (isMobile ? 6 : 12)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-55.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-43.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 6 : 10)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-26.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 12 : 32)) + "px";
+        img.style.width = Math.round(safeWidth * 1.07) + "px";
+        const currentRotation = rotation - (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-28.png") !== -1) {
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.left = Math.round(currentLeft + (isMobile ? 12 : 26)) + "px";
+        img.style.width = Math.round(safeWidth * 1.1) + "px";
+      }
+
+      if (img.src.indexOf("cutout-19.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 16 : 28)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 8 : 16)) + "px";
+        img.style.width = Math.round(safeWidth * 0.81) + "px";
+      }
+
+      if (img.src.indexOf("cutout-13.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 24 : 44)) + "px";
+        img.style.width = Math.round(safeWidth * 1.5) + "px";
+      }
+
+      if (img.src.indexOf("cutout-07.png") !== -1) {
+        img.style.width = Math.round(safeWidth * 1.25) + "px";
+        const currentRotation = rotation + (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-12.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 16 : 30)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 20)) + "px";
+        img.style.width = Math.round(safeWidth * 1.1) + "px";
+      }
+
+      if (img.src.indexOf("cutout-03.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 14 : 24)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 10 : 18)) + "px";
+        const currentRotation = rotation + (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+        cutout3Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth
+        };
+      }
+
+      if (img.src.indexOf("cutout-05.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 14 : 24)) + "px";
+        img.style.left = Math.round(currentLeft + (isMobile ? 8 : 14)) + "px";
+        img.style.width = Math.round(safeWidth * 1.1) + "px";
+      }
+
+      if (img.src.indexOf("cutout-17.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        const currentLeft = parseFloat(img.style.left) || 0;
+        img.style.top = Math.round(currentTop - (isMobile ? 10 : 18)) + "px";
+        img.style.left = Math.max(0, Math.round(currentLeft - (isMobile ? 36 : 82))) + "px";
+        img.style.width = Math.round(safeWidth * 2.275) + "px";
+        const currentRotation = rotation - (isMobile ? 8 : 12);
+        img.style.setProperty("--cutout-rot", currentRotation + "deg");
+      }
+
+      if (img.src.indexOf("cutout-48.png") !== -1) {
+        cutout48Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0
+        };
+      }
+
+      if (img.src.indexOf("cutout-49.png") !== -1) {
+        cutout49 = img;
+      }
+
+      if (img.src.indexOf("cutout-57.png") !== -1) {
+        cutout57 = img;
+      }
+
+      if (img.src.indexOf("cutout-56.png") !== -1) {
+        cutout56 = img;
+      }
+
+      if (img.src.indexOf("cutout-64.png") !== -1) {
+        const currentTop = parseFloat(img.style.top) || 0;
+        img.style.top = Math.round(currentTop + (isMobile ? 8 : 14)) + "px";
+      }
+
+      if (img.src.indexOf("cutout-64.png") !== -1) {
+        cutout64Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
+      if (img.src.indexOf("cutout-05.png") !== -1 || img.src.indexOf("cutout-07.png") !== -1) {
+        const finalWidth = parseFloat(img.style.width) || safeWidth;
+        const clampedRatio = Math.max(0.9, Math.min(2.5, ratio));
+        const finalHeight = finalWidth * clampedRatio;
+        let stuckLeft = 0;
+        let stuckTop = Math.max(0, Math.round(containerHeight - finalHeight));
+        if (img.src.indexOf("cutout-05.png") !== -1) {
+          const liftAmount = isMobile ? 18 : 36;
+          stuckTop = Math.max(0, stuckTop - liftAmount);
+        }
+        if (img.src.indexOf("cutout-07.png") !== -1) {
+          const rightOffset = isMobile ? 36 : 84;
+          const upOffset = isMobile ? 30 : 68;
+          stuckLeft = rightOffset;
+          stuckTop = Math.max(0, stuckTop - upOffset);
+        }
+        img.style.left = stuckLeft + "px";
+        img.style.right = "";
+        img.style.top = stuckTop + "px";
+      }
+
+      if (img.src.indexOf("cutout-07.png") !== -1) {
+        cutout7Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
+      if (img.src.indexOf("cutout-59.png") !== -1) {
+        cutout59Target = {
+          left: parseFloat(img.style.left) || 0,
+          top: parseFloat(img.style.top) || 0,
+          width: parseFloat(img.style.width) || safeWidth,
+          zIndex: parseInt(img.style.zIndex, 10) || 110
+        };
+      }
+
+      lane.nextTop = top + estHeight + minGap;
+    });
+
+    if (osamaCutout && cutout3Target) {
+      const osamaWidth = osamaCutout.offsetWidth || (isMobile ? 120 : 190);
+      const xOffset = isMobile ? -10 : -28;
+      const yOffset = isMobile ? 56 : 92;
+      const desiredLeft = cutout3Target.left + cutout3Target.width + xOffset;
+      const desiredTop = cutout3Target.top + yOffset;
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - osamaWidth - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(desiredTop));
+
+      osamaCutout.style.left = clampedLeft + "px";
+      osamaCutout.style.top = clampedTop + "px";
+      osamaCutout.style.right = "auto";
+      osamaCutout.style.bottom = "auto";
+      if (typeof osamaCutout.playbackRate === "number") {
+        osamaCutout.playbackRate = 1.12;
+      }
+    }
+
+    if (nineCutout && cutout48Target) {
+      const nineWidth = nineCutout.offsetWidth || (isMobile ? 110 : 180);
+      const xGap = isMobile ? 8 : 12;
+      const xRightNudge = isMobile ? 6 : 10;
+      const yOffset = isMobile ? 26 : 44;
+      const desiredLeft = cutout48Target.left - nineWidth - xGap + xRightNudge;
+      const desiredTop = cutout48Target.top + yOffset;
+      const clampedLeft = Math.max(0, Math.round(desiredLeft));
+      const clampedTop = Math.max(0, Math.round(desiredTop));
+
+      nineCutout.style.left = clampedLeft + "px";
+      nineCutout.style.top = clampedTop + "px";
+      nineCutout.style.right = "auto";
+      nineCutout.style.bottom = "auto";
+      nineCutout.style.position = "absolute";
+    }
+
+    if (cutout56 && cutout59Target) {
+      const baseCutout56Width = parseFloat(cutout56.style.width) || (isMobile ? 47 : 105);
+      const cutout56Width = Math.round(baseCutout56Width * 1.1);
+      const xGap = isMobile ? 6 : 12;
+      const xLeftNudge = isMobile ? 11 : 22;
+      const yOffset = isMobile ? 2 : 4;
+      const desiredLeft = cutout59Target.left + cutout59Target.width + xGap - xLeftNudge;
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - cutout56Width - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(cutout59Target.top + yOffset));
+
+      cutout56.style.width = cutout56Width + "px";
+      cutout56.style.left = clampedLeft + "px";
+      cutout56.style.top = clampedTop + "px";
+      cutout56.style.right = "";
+      cutout56.style.zIndex = String(cutout59Target.zIndex + 1);
+    }
+
+    if (cutout57 && cutout7Target) {
+      const cutout57Width = parseFloat(cutout57.style.width) || (isMobile ? 47 : 105);
+      const xGap = isMobile ? 6 : 12;
+      const yOffset = isMobile ? 2 : 4;
+      const desiredLeft = cutout7Target.left + cutout7Target.width + xGap;
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - cutout57Width - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(cutout7Target.top + yOffset));
+
+      cutout57.style.left = clampedLeft + "px";
+      cutout57.style.top = clampedTop + "px";
+      cutout57.style.right = "";
+      cutout57.style.zIndex = String(cutout7Target.zIndex + 1);
+    }
+
+    if (cutout49 && cutout64Target) {
+      const cutout49Width = parseFloat(cutout49.style.width) || (isMobile ? 47 : 105);
+      const xGap = isMobile ? 8 : 14;
+      const yOffset = isMobile ? 24 : 36;
+      let desiredLeft = cutout64Target.left + cutout64Target.width + xGap;
+
+      if (desiredLeft + cutout49Width > containerWidth - 6) {
+        desiredLeft = cutout64Target.left - cutout49Width - xGap;
+      }
+
+      const clampedLeft = Math.min(
+        Math.max(0, Math.round(desiredLeft)),
+        Math.max(0, Math.round(containerWidth - cutout49Width - 6))
+      );
+      const clampedTop = Math.max(0, Math.round(cutout64Target.top + yOffset));
+
+      cutout49.style.left = clampedLeft + "px";
+      cutout49.style.top = clampedTop + "px";
+      cutout49.style.right = "";
+      cutout49.style.zIndex = String(cutout64Target.zIndex + 1);
+    }
+  }
+
   function setupCutouts() {
-    const leftColumn = document.getElementById("cutout-column-left");
-    const rightColumn = document.getElementById("cutout-column-right");
-    if (!leftColumn || !rightColumn) return;
+    const container = document.querySelector(".page-scroll");
+    if (!container) return;
 
-    leftColumn.innerHTML = "";
-    rightColumn.innerHTML = "";
+    const layer = document.createElement("div");
+    layer.className = "artist-cutout-layer";
 
-    const isSmallScreen = window.matchMedia("(max-width: 900px)").matches;
-    const maxCutouts = isSmallScreen ? 16 : 28;
-    const activeSources = CUTOUT_SOURCES.slice(0, maxCutouts);
+    const activeSources = getActiveCutoutSources();
+
+    let layoutRaf = 0;
+    function scheduleLayout() {
+      if (layoutRaf) return;
+      layoutRaf = window.requestAnimationFrame(function () {
+        layoutRaf = 0;
+        layoutCutouts(layer, container);
+      });
+    }
 
     activeSources.forEach(function (src, index) {
       const img = createCutoutImage(src, index);
-      img.classList.remove("no-sway");
-      img.style.removeProperty("--cutout-rot");
-      img.style.removeProperty("--sway-dur");
-      img.style.removeProperty("--sway-delay");
-      if (index % 2 === 0) {
-        leftColumn.appendChild(img);
-      } else {
-        rightColumn.appendChild(img);
-      }
+      img.addEventListener("load", scheduleLayout);
+      layer.appendChild(img);
     });
-  }
 
-  function setupResponsiveStars() {
-    const mobileStarsQuery = window.matchMedia("(max-width: 900px)");
-    function applyStarsMode() {
-      if (!document.body) return;
-      document.body.classList.toggle("reduced-stars", mobileStarsQuery.matches);
-    }
-    applyStarsMode();
-    if (typeof mobileStarsQuery.addEventListener === "function") {
-      mobileStarsQuery.addEventListener("change", applyStarsMode);
-    } else if (typeof mobileStarsQuery.addListener === "function") {
-      mobileStarsQuery.addListener(applyStarsMode);
-    }
+    container.appendChild(layer);
+    scheduleLayout();
+
+    window.addEventListener("resize", function () {
+      scheduleLayout();
+    });
   }
 
   function setupCutoutVideos() {
     const START_OFFSET = 0.08;
     const videos = Array.from(document.querySelectorAll(".osama-cutout, .nine-cutout"));
+    if (LOW_POWER_MODE) {
+      videos.forEach(disableMediaElement);
+      return;
+    }
+
     videos.forEach(function (video) {
-      applyIOSVideoHints(video);
+      hydrateMediaElement(video);
       function skipJitterFrames() {
         if (!Number.isFinite(video.duration) || video.duration <= START_OFFSET + 0.05) return;
         if (video.currentTime < START_OFFSET) {
@@ -583,8 +934,12 @@
     const videos = Array.from(document.querySelectorAll(".bg-video-left, .bg-video-right"));
     if (!videos.length) return;
 
+    if (LOW_POWER_MODE) {
+      videos.forEach(disableMediaElement);
+      return;
+    }
+
     const visibleState = new WeakMap();
-    const keepSingleVideo = UNIVERSAL_RENDER_MODE ? false : isIPhoneSafari;
 
     function syncPlayback(video) {
       const isVisible = visibleState.get(video) !== false;
@@ -616,13 +971,7 @@
     }
 
     videos.forEach(function (video) {
-      applyIOSVideoHints(video);
-      if (keepSingleVideo && video.classList.contains("bg-video-right")) {
-        visibleState.set(video, false);
-        video.pause();
-        video.style.display = "none";
-        return;
-      }
+      hydrateMediaElement(video);
       visibleState.set(video, true);
       video.addEventListener("loadedmetadata", function () {
         if (Number.isFinite(video.duration) && video.duration > 0.08 && video.currentTime < 0.04) {
@@ -648,22 +997,17 @@
   function setupBouncingBgVideo() {
     const dvdVideo = document.querySelector(".bg-video-left");
     if (!dvdVideo) return;
-    if (lowPowerMode) {
-      dvdVideo.style.transform = "";
-      dvdVideo.style.willChange = "auto";
-      return;
-    }
+    if (LOW_POWER_MODE) return;
     const pageScroll = document.querySelector(".page-scroll");
 
     let x = 0;
     let y = 0;
     let rafId = 0;
     const margin = 10;
-    const profile = getViewportProfile();
-    const isMobile = profile.isMobile;
+    const isMobile = PERFORMANCE_PROFILE.mobile;
     let vx = isMobile ? 3.1 : 4.2;
     let vy = isMobile ? 2.5 : 3.4;
-    const frameMs = lowPowerMode ? 1000 / 24 : 1000 / 30;
+    const frameMs = PERFORMANCE_PROFILE.lite ? 1000 / 20 : 1000 / 30;
     let maxX = 0;
     let maxY = 0;
     let accumulator = 0;
@@ -777,11 +1121,7 @@
   function setupBouncingLeaf() {
     const leafWrap = document.querySelector(".bg-leaf-left-wrap");
     if (!leafWrap) return;
-    if (lowPowerMode) {
-      leafWrap.style.transform = "";
-      leafWrap.style.willChange = "auto";
-      return;
-    }
+    if (LOW_POWER_MODE) return;
 
     const pageScroll = document.querySelector(".page-scroll");
     const content = document.querySelector("main.content-wrap");
@@ -789,11 +1129,10 @@
     let y = 0;
     let rafId = 0;
     const margin = 8;
-    const profile = getViewportProfile();
-    const isMobile = profile.isMobile;
+    const isMobile = PERFORMANCE_PROFILE.mobile;
     let vx = isMobile ? 1 : 1.3;
     let vy = isMobile ? 0.8 : 1.05;
-    const frameMs = lowPowerMode ? 1000 / 20 : 1000 / 28;
+    const frameMs = PERFORMANCE_PROFILE.lite ? 1000 / 16 : 1000 / 28;
     let maxX = 0;
     let maxY = 0;
     let accumulator = 0;
@@ -903,18 +1242,9 @@
   }
 
   applyPerformanceProfile();
-  syncViewportHeightVar();
-  window.addEventListener("resize", applyPerformanceProfile);
-  window.addEventListener("orientationchange", applyPerformanceProfile);
-  window.addEventListener("resize", syncViewportHeightVar);
-  window.addEventListener("orientationchange", syncViewportHeightVar);
-  window.addEventListener("pageshow", syncViewportHeightVar);
-  window.addEventListener("resize", setupCutouts);
-  window.addEventListener("orientationchange", setupCutouts);
   setupBouncingBgVideo();
   setupBouncingLeaf();
   setupBackgroundVideos();
-  setupResponsiveStars();
   setupThemeSwitcher();
   setupPlayer();
   setupCutoutVideos();
